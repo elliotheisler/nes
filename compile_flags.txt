@@ -4,3 +4,5 @@ src/include
 lib/include
 -I 
 .
+-W
+c++20-extensions
