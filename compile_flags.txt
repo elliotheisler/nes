@@ -1,8 +1,0 @@
--I 
-src/include
--I 
-lib/include
--I 
-.
--W
-c++20-extensions

@@ -14,6 +14,10 @@ env = Environment(
 
 env.VariantDir('build', 'src', duplicate=0)
 
+# https://scons.org/doc/production/HTML/scons-user/ch27.html
+env.Tool('compilation_db')
+env.CompilationDatabase()
+
 env.Program( target='bin/test_check_bits'
            , source=['build/test_check_bits.cpp', 'build/common.cpp']
             )
