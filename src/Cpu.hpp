@@ -1,5 +1,8 @@
 #include <cstdint>
 #include "Mapper.hpp"
+#include "json.hpp"
+#include "common.hpp"
+using json = nlohmann::json;
 class Cpu {
   public:
     enum class CpuFlag {
@@ -24,6 +27,7 @@ class Cpu {
     void clock();
 
   private:
+    inline static const json inst_db{ read_json(INST_JSON_PATH) };
     uint8_t A, Y, X, SP, SR;
     uint16_t PC;
 

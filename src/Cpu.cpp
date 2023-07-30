@@ -87,3 +87,4 @@ uint8_t* Cpu::apply_addr8(uint16_t addr) {
 //             }
 //     }
 }
+// const json Cpu::inst_db{ read_json("instructions.json") };

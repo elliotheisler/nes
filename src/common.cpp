@@ -3,6 +3,8 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
+#include <fstream>
+#include "json.hpp"
 
 uint16_t select_bitrange(uint16_t word, int lower, int upper) {
     const uint16_t mask = pow(2, 1 + upper - lower) - 1;
@@ -49,4 +51,12 @@ bool check_bits(const char* bitmask_str, uint16_t word) {
     if (*c != '\0' && i <= -1) 
         throw "bitmask_str too long  > 16 bits";
     return true;
+}
+
+using json = nlohmann::json;
+json read_json(const char* path) {
+    std::ifstream f{ path };
+    json data = json::parse( f );
+    f.close();
+    return data;
 }
