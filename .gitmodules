@@ -1,9 +1,9 @@
-[submodule "roms"]
-	path = roms
+[submodule "christopherpow_testroms"]
+	path = test/christopherpower_roms
 	url = git@github.com:christopherpow/nes-test-roms.git
-[submodule "lib/json"]
+[submodule "json"]
 	path = lib/json
 	url = git@github.com:nlohmann/json.git
-[submodule "lib/mos6502"]
-	path = lib/mos6502
+[submodule "mos6502"]
+	path = mos6502
 	url = git@github.com:elliotheisler/mos6502.git

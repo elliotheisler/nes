@@ -1,7 +1,7 @@
 #pragma once
 #include <cstdint>
 #include "json.hpp"
-#define INST_JSON_PATH "lib/mos6502/python_scraping/instructions.json"
+#define INST_JSON_PATH "mos6502/python_scraping/instructions.json"
 
 using json = nlohmann::json;
 
