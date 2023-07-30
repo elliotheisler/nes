@@ -16,5 +16,17 @@
         "directory": "/home/elliot/programming/stuff/a",
         "file": "src/json_test.cpp",
         "output": "build/json_test.o"
+    },
+    {
+        "command": "clang++ -o build/test_cpu.o -c -std=c++20 -Isrc -Ilib/json/single_include/nlohmann src/test_cpu.cpp",
+        "directory": "/home/elliot/programming/stuff/a",
+        "file": "src/test_cpu.cpp",
+        "output": "build/test_cpu.o"
+    },
+    {
+        "command": "clang++ -o build/common.o -c -std=c++20 -Isrc -Ilib/json/single_include/nlohmann src/common.cpp",
+        "directory": "/home/elliot/programming/stuff/a",
+        "file": "src/common.cpp",
+        "output": "build/common.o"
     }
 ]

@@ -26,3 +26,6 @@ env.Program( target='bin/json_test'
             , source = ['build/json_test.cpp']
             )
 
+env.Program( target='bin/test_cpu'
+            , source = ['build/test_cpu.cpp', 'build/common.cpp']
+            )
