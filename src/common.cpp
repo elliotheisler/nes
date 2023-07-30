@@ -3,7 +3,6 @@
 #include <cassert>
 #include <cstring>
 #include <iostream>
-#include <fstream>
 #include "json.hpp"
 
 uint16_t select_bitrange(uint16_t word, int lower, int upper) {
@@ -53,10 +52,3 @@ bool check_bits(const char* bitmask_str, uint16_t word) {
     return true;
 }
 
-using json = nlohmann::json;
-json read_json(const char* path) {
-    std::ifstream f{ path };
-    json data = json::parse( f );
-    f.close();
-    return data;
-}

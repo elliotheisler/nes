@@ -1,10 +1,10 @@
 # https://github.com/SCons/scons/wiki
-# Import necessary modules from SCons
+import os
 
 
 env = Environment(
-#         ENV = os.environ
-          CXX='clang++'
+          ENV = os.environ
+        , CXX='clang++'
         , CXXFLAGS=['-std=c++20']
 #       , CPPFLAGS=['-Wno-unused-value']
         # LINKFLAGS
@@ -26,6 +26,9 @@ env.Program( target='bin/json_test'
             , source = ['build/json_test.cpp']
             )
 
-env.Program( target='bin/test_cpu'
-            , source = ['build/test_cpu.cpp', 'build/common.cpp']
+# env.Program( target='bin/test_cpu'
+#             , source = ['build/test_cpu.cpp', 'build/Cpu.cpp', 'build/common.cpp']
+#             )
+env.Program( target='bin/test_instdb'
+            , source = ['build/test_instdb.cpp', 'build/instruction_database.cpp']
             )

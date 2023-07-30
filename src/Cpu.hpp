@@ -1,7 +1,8 @@
+#pragma once
 #include <cstdint>
 #include "Mapper.hpp"
 #include "json.hpp"
-#include "common.hpp"
+#include "instruction_database.hpp"
 using json = nlohmann::json;
 class Cpu {
   public:
@@ -27,7 +28,9 @@ class Cpu {
     void clock();
 
   private:
-    inline static const json inst_db{ read_json(INST_JSON_PATH) };
+    static const std::array<InstRecord, 256> inst_db;
+
+
     uint8_t A, Y, X, SP, SR;
     uint16_t PC;
 
@@ -53,4 +56,6 @@ class Cpu {
     // flag functions
     bool get_flag(CpuFlag flag);
     void set_flag(CpuFlag flag, bool val);
+
 };
+

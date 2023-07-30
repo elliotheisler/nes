@@ -18,15 +18,15 @@
         "output": "build/json_test.o"
     },
     {
-        "command": "clang++ -o build/test_cpu.o -c -std=c++20 -Isrc -Ilib/json/single_include/nlohmann src/test_cpu.cpp",
+        "command": "clang++ -o build/test_instdb.o -c -std=c++20 -Isrc -Ilib/json/single_include/nlohmann src/test_instdb.cpp",
         "directory": "/home/elliot/programming/stuff/a",
-        "file": "src/test_cpu.cpp",
-        "output": "build/test_cpu.o"
+        "file": "src/test_instdb.cpp",
+        "output": "build/test_instdb.o"
     },
     {
-        "command": "clang++ -o build/common.o -c -std=c++20 -Isrc -Ilib/json/single_include/nlohmann src/common.cpp",
+        "command": "clang++ -o build/instruction_database.o -c -std=c++20 -Isrc -Ilib/json/single_include/nlohmann src/instruction_database.cpp",
         "directory": "/home/elliot/programming/stuff/a",
-        "file": "src/common.cpp",
-        "output": "build/common.o"
+        "file": "src/instruction_database.cpp",
+        "output": "build/instruction_database.o"
     }
 ]

@@ -1,14 +1,20 @@
 #include <cstdint>
+#include <string>
+#include <iostream>
 #include "Mapper.hpp"
 #include "Cpu.hpp"
 #include "common.hpp"
+#include "instruction_database.hpp"
+using json = nlohmann::json;
+
+Cpu::Cpu() {}
 
 void Cpu::clock() {
-        counter++;
-        if (cycles() == counter) {
-            exec();
-            counter = 0;
-        }
+//         counter++;
+//         if (cycles() == counter) {
+//             exec();
+//             counter = 0;
+//         }
 }
 
 void Cpu::do_poweron() {
@@ -88,3 +94,9 @@ uint8_t* Cpu::apply_addr8(uint16_t addr) {
 //     }
 }
 // const json Cpu::inst_db{ read_json("instructions.json") };
+
+
+// json database stuff
+
+const std::array<InstRecord, 256> Cpu::inst_db { read_inst_db(INST_JSON_PATH) };
+

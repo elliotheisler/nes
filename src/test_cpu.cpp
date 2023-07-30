@@ -2,4 +2,5 @@
 
 
 int main() {
+    Cpu cpu{};
 }
