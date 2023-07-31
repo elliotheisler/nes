@@ -3,6 +3,7 @@
 #include <iostream>
 #include "Mapper.hpp"
 #include "Cpu.hpp"
+#include "CpuAndPpu.hpp"
 #include "common.hpp"
 #include "instruction_database.hpp"
 using json = nlohmann::json;
@@ -57,43 +58,33 @@ void Cpu::do_reset() {
 //         2A03letterless: APU frame counter retains old value [6]
 }
 
-uint8_t* Cpu::apply_addr8(uint16_t addr) {
+
+void* Cpu::do_loadstore(MemAccess m) {
     // https://www.nesdev.org/wiki/CPU_memory_map
-    uint16_t actual_addr;
-    if (check_bits("000x_xxxx_xxxx_xxxx", addr)) {
-        // 2KB internal ram
-    }
-    else if (check_bits("001x_xxxx_xxxx_xxxx", addr)) {
-        // 8 NES PPU registers
-    } 
-    else {
-            if (addr >= 0b0100000000100000) {
+    using enum MemAccess::AccessType;
+
+    switch (m.addr >> 13) {
+        case 0b000: // 2 KB internal RAM
+            switch (m.type) {
+                case kLoad:
+                    return &RAM[m.addr & 0b0000011111111111];
+                case kStore:
+                    RAM[m.addr & 0b0000011111111111] = m.payload;
+            }
+        case 0b001: // 8 NES PPU registers
+            // actual_addr = addr & 0b0000000000000111;
+            break;
+        default: 
+            if (m.addr > 0b0100000000011111) {
                     // cartridge space
-            } else if (check_bits("xxxx_xxxx_xxx1_1xxx", addr)) {
+            } else if ((m.addr & 0b11000) == 0b11000) {
                     // APU and I/O functionality that is normally disabled. See CPU Test Mode. 
             } else {
                     // NES APU and I/O registers
             }
     }
-// faster implementation not using check_bits()
-//     switch (addr >> 13) {
-//         case 0b000: // 2 KB internal RAM
-//             actual_addr = addr & 0b0000011111111111;
-//             break;
-//         case 0b001: // 8 NES PPU registers
-//             actual_addr = addr & 0b0000000000000111;
-//             break;
-//         default: 
-//             if (addr >= 0b0100000000100000) {
-//                     // cartridge space
-//             } else if (select_bitrange(addr, 0b11000) == 0b11) {
-//                     // APU and I/O functionality that is normally disabled. See CPU Test Mode. 
-//             } else {
-//                     // NES APU and I/O registers
-//             }
-//     }
+    return nullptr;
 }
-// const json Cpu::inst_db{ read_json("instructions.json") };
 
 
 // json database stuff
