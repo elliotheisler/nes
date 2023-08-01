@@ -3,7 +3,22 @@
 #include <iostream>
 #include <bitset>
 #include <fstream>
+#include <optional>
 using json = nlohmann::json;
+
+std::optional<AddrMode> string2AddrMode(const std::string& name) {
+    for (int i = 0; const char* s : ADDRMODE_2_STRING) {
+        if (name == s) {
+            return static_cast<AddrMode>(i);
+        }
+        i++;
+    }
+    return std::nullopt;
+}
+
+std::string AddrMode2string(AddrMode mode) {
+    return ADDRMODE_2_STRING[mode];
+}
 
 bool InstRecord::is_empty() const {
     return bytes == 0 && cycles == 0;
@@ -14,7 +29,7 @@ std::ostream& operator<<(std::ostream& os, const InstRecord& ir) {
         << "{  name  : " << ir.name << std::endl
         << "   desc  : " << ir.description  << std::endl
         << "   opcode: " << std::bitset<8>(ir.opcode) << std::endl
-        << "   mode  : " << ir.adr_mode << std::endl
+        << "   mode  : " << AddrMode2string(ir.adr_mode) << std::endl
         << "   bytes : " << ir.bytes << std::endl
         << "   cycles: " << ir.cycles << std::endl
         << "}\n";
@@ -27,7 +42,9 @@ void from_json(const json& j, InstRecord& ir) {
     ir.opcode = std::stoi(
             j.at("opcode").template get<std::string>().substr(1), nullptr, 16
             );
-    ir.adr_mode = j.at("mode").template get<std::string>();
+    ir.adr_mode = string2AddrMode(
+            j.at("mode").template get<std::string>()
+            ).value();
     ir.bytes = std::stoi(
             j.at("bytes").template get<std::string>(), nullptr
             );
