@@ -1,23 +1,41 @@
 #pragma once
 #include <cstdint>
-class MemAccess {
+
+class r16 {
+  public:
+    uint8_t page;
+    uint8_t index;
+    operator int() const;
+    r16 operator+(uint8_t other);
+    r16 operator+(int other);
+    r16 operator++(int);
+
+    r16 operator=(uint8_t val);
+    r16 operator+=(uint8_t val);
+};
+
+/*
+ * wrap/no wrap
+ */
+
+class XpuBase {
   public:
     enum class AccessType {
         kLoad,
         kStore
     };
-    AccessType type;
-    uint16_t addr;
-    uint8_t payload;
-
-    template <AccessType T>
-    MemAccess(uint16_t new_addr): addr{ new_addr } {
-        static_assert(T == AccessType::kLoad,"tried to create a store MemAccess without providing a payload argument");
-    }
-
-    template <AccessType T>
-    MemAccess(uint16_t new_addr, uint8_t new_payload): addr{ new_addr }, payload {new_payload} {
-        static_assert(T == AccessType::kStore,"tried to create a load MemAccess with redundant payload argument provided");
-    }
-
+    // define the address space with respect to loads/stores
+    // using this function
+    // TODO: use CRTP for static polymorphism here
+  public:
+    template <AccessType A>
+    uint8_t addr_access(r16 addr, uint8_t payload);
 };
+
+/*
+ u8  -> u8  -
+ u16 -> u8  -
+ u8  -> u16 w
+ u16 -> u16 w
+ u16 -> u16 -
+*/
