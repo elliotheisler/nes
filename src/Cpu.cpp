@@ -1,6 +1,7 @@
 #include "Cpu.hpp"
 
 #include <cstdint>
+#include <format>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -16,15 +17,17 @@ using enum XpuBase::AccessType;
 Cpu::Cpu() {}
 
 void Cpu::clock() {
-    //         TODO:
-    //         counter++;
-    //         if (cycles() == counter) {
-    //             exec();
-    //             counter = 0;
-    //         }
+    counter++;
+    cycles_elapsed++;
+    if (get_cycles(load8(PC)) == counter) {
+        exec();
+        counter = 0;
+    }
+    log_nintendulator();
 }
 
 void Cpu::exec() {
+    std::cout << "exec\n";
     // https://llx.com/Neil/a2/opcodes.html
     const uint8_t opcode = load8(PC);
     const int cycles     = get_cycles(opcode);
@@ -55,6 +58,9 @@ void Cpu::exec() {
     else if (check_bits("101_xxx_xx", opcode)) {
         *reg_arg = load8(effective_addr);
     }
+
+    PC = PC + num_bytes;
+    log_nintendulator();
 }
 
 AddrMode Cpu::get_mode(uint8_t opcode) { return inst_db[opcode].adr_mode; }
@@ -73,11 +79,11 @@ r16 Cpu::get_effective_addr(AddrMode m) {
             addr = load8(PC + 1);
             break;
         case mZeroPageX:
-            addr       = load8(PC + 1);
+            addr        = load8(PC + 1);
             addr.index += X;
             break;
         case mZeroPageY:
-            addr       = load8(PC + 1);
+            addr        = load8(PC + 1);
             addr.index += Y;
             break;
 
@@ -85,22 +91,22 @@ r16 Cpu::get_effective_addr(AddrMode m) {
             addr = load16(PC + 1, kNoPageWrap);
             break;
         case mAbsoluteX:
-            addr = load16(PC + 1, kNoPageWrap);
+            addr  = load16(PC + 1, kNoPageWrap);
             addr += X;
             break;
         case mAbsoluteY:
-            addr = load16(PC + 1, kNoPageWrap);
+            addr  = load16(PC + 1, kNoPageWrap);
             addr += Y;
             break;
 
         case mIndirectX:
-            addr       = load8(PC + 1);
+            addr        = load8(PC + 1);
             addr.index += X;
-            addr       = load16(addr, kDoPageWrap);
+            addr        = load16(addr, kDoPageWrap);
             break;
         case mIndirectY:
-            addr.index = load8(PC + 1);
-            addr       = load16(addr, kDoPageWrap);
+            addr.index  = load8(PC + 1);
+            addr        = load16(addr, kDoPageWrap);
             addr       += Y;
             break;
 
@@ -108,7 +114,7 @@ r16 Cpu::get_effective_addr(AddrMode m) {
             addr = PC + 1;
             break;
         case mRelative:
-            addr       = PC;
+            addr        = PC;
             addr.index += static_cast<int8_t>(load8(PC + 1));
             break;
         case mAccumulator:
@@ -123,17 +129,17 @@ r16 Cpu::get_effective_addr(AddrMode m) {
 
 void Cpu::do_poweron() {
     // https://www.nesdev.org/wiki/CPU_power_up_state#At_power-up
-    SR = 0b00110100;
-    A = X = Y = 0x00;
-    SP        = 0b11111101;
-    store8(0x4017, 0);  // frame irq enabled
-    store8(0x4015, 0);  // all channels disabled
-    for (uint16_t addr = 0x4000; addr <= 0x4005; addr++) {
-        store8(addr, 0);
-    }
-    for (uint16_t addr = 0x4010; addr <= 0x4013; addr++) {
-        store8(addr, 0);
-    }
+    //     SR = 0b00110100;
+    //     A = X = Y = 0x00;
+    //     SP        = 0b11111101;
+    //     store8(0x4017, 0);  // frame irq enabled
+    //     store8(0x4015, 0);  // all channels disabled
+    //     for (uint16_t addr = 0x4000; addr <= 0x4005; addr++) {
+    //         store8(addr, 0);
+    //     }
+    //     for (uint16_t addr = 0x4010; addr <= 0x4013; addr++) {
+    //         store8(addr, 0);
+    //     }
     // TODO:
     //     All 15 bits of noise channel LFSR = $0000[5]. The first time the LFSR
     //     is clocked from the all-0s state, it will shift in a 1. APU Frame
@@ -156,10 +162,10 @@ void Cpu::do_poweron() {
 
 void Cpu::do_reset() {
     // https://www.nesdev.org/wiki/CPU_power_up_state#After_reset
-    using enum Cpu::CpuFlag;
-    SP -= 3;
-    set_flag(fInterruptDisable, true);
-    store8(0x4015, 0);
+    //     using enum Cpu::CpuFlag;
+    //     SP -= 3;
+    //     set_flag(fInterruptDisable, true);
+    //     store8(0x4015, 0);
     // TODO:
     //     APU triangle phase is reset to 0 (i.e. outputs a value of 15, the
     //     first step of its waveform) APU DPCM output ANDed with 1 (upper 6
@@ -219,6 +225,16 @@ uint8_t Cpu::addr_access(uint16_t addr, uint8_t payload) {
             }
     }
     return 0;
+}
+
+void Cpu::log_nintendulator() {
+    fprintf(
+        "%X4 A:%X2 X:%X2 Y:%X2 P:%X2 SP:%X2 CYC:%d6\n",
+         PC, A,    X,    Y,    SR,    SP,   cycles_elapsed
+         );
+    //     std::cout << std::vformat(
+    //         "{} A:{}, X:{}, Y:{}, P:{}, SP:{}, CYC:{}\n",
+    //         std::make_format_args(PC, A, X, Y, SR, SP, cycles_elapsed));
 }
 
 // json database stuff

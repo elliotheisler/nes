@@ -61,4 +61,7 @@ class Cpu : public XpuBase {
     // flag functions
     bool get_flag(CpuFlag flag);
     void set_flag(CpuFlag flag, bool val);
+
+    int cycles_elapsed;
+    void log_nintendulator();
 };

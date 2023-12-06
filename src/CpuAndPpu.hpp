@@ -6,8 +6,10 @@ class r16 {
     uint8_t page;
     uint8_t index;
     operator int() const;
+
     r16 operator+(uint8_t other);
     r16 operator+(int other);
+
     r16 operator++(int);
 
     r16 operator=(uint8_t val);
