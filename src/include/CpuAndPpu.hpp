@@ -2,10 +2,11 @@
 #include <cstdint>
 
 class r16 {
-  public:
+   public:
     uint8_t page;
     uint8_t index;
-    operator int() const;
+    r16(uint16_t i);
+    operator unsigned int() const;
 
     r16 operator+(uint8_t other);
     r16 operator+(int other);
@@ -21,15 +22,12 @@ class r16 {
  */
 
 class XpuBase {
-  public:
-    enum class AccessType {
-        kLoad,
-        kStore
-    };
+   public:
+    enum class AccessType { kLoad, kStore };
     // define the address space with respect to loads/stores
     // using this function
     // TODO: use CRTP for static polymorphism here
-  public:
+   public:
     template <AccessType A>
     uint8_t addr_access(r16 addr, uint8_t payload);
 };

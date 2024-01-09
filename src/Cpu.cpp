@@ -1,7 +1,7 @@
 #include "Cpu.hpp"
 
 #include <cstdint>
-#include <format>
+#include <cstdio>
 #include <iostream>
 #include <stdexcept>
 #include <string>
@@ -15,6 +15,10 @@ using AccessType = XpuBase::AccessType;
 using enum XpuBase::AccessType;
 
 Cpu::Cpu() {}
+
+Cpu::Cpu(uint8_t m_A, uint8_t m_Y, uint8_t m_X, uint8_t m_SP, uint8_t m_SR,
+         uint16_t m_PC)
+    : A{m_A}, Y{m_Y}, X{m_X}, SP{m_SP}, SR{m_SR}, PC{m_PC} {}
 
 void Cpu::clock() {
     counter++;
@@ -69,11 +73,13 @@ int Cpu::get_cycles(uint8_t opcode) { return inst_db[opcode].cycles; }
 
 int Cpu::get_num_bytes(uint8_t opcode) { return inst_db[opcode].bytes; }
 
-uint8_t Cpu::get_affected_flags(uint8_t opcode) {}
+uint8_t Cpu::get_affected_flags(uint8_t opcode) {  // TODO
+    return 0;
+}
 
 r16 Cpu::get_effective_addr(AddrMode m) {
     using enum PageWrap;
-    r16 addr{.page = 0, .index = 0};
+    r16 addr{0x0000};
     switch (m) {
         case mZeroPage:
             addr = load8(PC + 1);
@@ -99,6 +105,9 @@ r16 Cpu::get_effective_addr(AddrMode m) {
             addr += Y;
             break;
 
+        case mIndirect:
+            addr.index = load8(PC + 1);
+            addr       = load16(addr, kDoPageWrap);
         case mIndirectX:
             addr        = load8(PC + 1);
             addr.index += X;
@@ -178,7 +187,7 @@ void Cpu::do_reset() {
 
 r16 Cpu::load16(r16 addr, PageWrap pw) {
     using enum Cpu::PageWrap;
-    r16 ret;
+    r16 ret{0x0000};
     ret.index = load8(addr);
     switch (pw) {
         case kDoPageWrap:
@@ -216,22 +225,20 @@ uint8_t Cpu::addr_access(uint16_t addr, uint8_t payload) {
             break;
         default:
             if (addr > 0b0100000000011111) {
-                // cartridge space
+                // After the first 4 * 8 bytes: cartridge space
             } else if ((addr & 0b11000) == 0b11000) {
-                // APU and I/O functionality that is normally disabled. See CPU
-                // Test Mode.
+                // 8 bytes: APU and I/O functionality that is normally disabled.
+                // See CPU Test Mode.
             } else {
-                // NES APU and I/O registers
+                // First 3 * 8 bytes: NES APU and I/O registers
             }
     }
     return 0;
 }
 
 void Cpu::log_nintendulator() {
-    fprintf(
-        "%X4 A:%X2 X:%X2 Y:%X2 P:%X2 SP:%X2 CYC:%d6\n",
-         PC, A,    X,    Y,    SR,    SP,   cycles_elapsed
-         );
+    fprintf(stdout, "%04X A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d\n",
+            static_cast<unsigned int>(PC), A, X, Y, SR, SP, cycles_elapsed);
     //     std::cout << std::vformat(
     //         "{} A:{}, X:{}, Y:{}, P:{}, SP:{}, CYC:{}\n",
     //         std::make_format_args(PC, A, X, Y, SR, SP, cycles_elapsed));

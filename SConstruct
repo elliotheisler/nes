@@ -8,7 +8,7 @@ env = Environment(
         , CXXFLAGS=['-std=c++20']
 #       , CPPFLAGS=['-Wno-unused-value']
         # LINKFLAGS
-        , CPPPATH=['src', 'lib/json/single_include/nlohmann/']
+        , CPPPATH=['src/include', 'lib/json/single_include/nlohmann/']
         # LIBS
         )
 

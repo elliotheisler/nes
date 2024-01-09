@@ -20,6 +20,9 @@ class Cpu : public XpuBase {
     };
 
     Cpu();  // TODO: Cartridge parameter
+    Cpu(uint8_t m_A, uint8_t m_Y, uint8_t m_X, uint8_t m_SP, uint8_t m_SR,
+        uint16_t m_PC);
+
     // set cpu to power-on state
     void do_poweron();
     // perform state changes equivalent to hitting the NES reset button
@@ -31,7 +34,7 @@ class Cpu : public XpuBase {
     static const std::array<InstRecord, 256> inst_db;
 
     uint8_t A, Y, X, SP, SR;
-    r16 PC;
+    r16 PC = 0x0000;
 
     // TODO: Cartridge cartridge;
     // only the cpu communicates with the APU and the NES's 2kb of RAM
