@@ -6,10 +6,9 @@
 #include <stdexcept>
 #include <string>
 
-#include "CpuAndPpu.hpp"
 #include "Mapper.hpp"
-#include "common.hpp"
 #include "instruction_database.hpp"
+#include "register.hpp"
 using json       = nlohmann::json;
 using AccessType = XpuBase::AccessType;
 using enum XpuBase::AccessType;

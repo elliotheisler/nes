@@ -1,0 +1,7 @@
+- put instruction_database in its own namespace
+1. parse and load nes files
+2. test and verify cpu
+4. ppu
+5. graphical output
+6. input
+7. mappers

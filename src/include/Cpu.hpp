@@ -1,9 +1,9 @@
 #pragma once
 #include <cstdint>
 
-#include "CpuAndPpu.hpp"
 #include "Mapper.hpp"
 #include "instruction_database.hpp"
+#include "register.hpp"
 using json = nlohmann::json;
 class Cpu : public XpuBase {
    public:
