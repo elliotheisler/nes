@@ -5,7 +5,7 @@
 #include "instruction_database.hpp"
 #include "register.hpp"
 using json = nlohmann::json;
-class Cpu : public XpuBase {
+class Cpu : public ProcessorBase {
    public:
     enum class CpuFlag {
         fCarry            = 1 << 0,

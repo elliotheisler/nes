@@ -10,8 +10,8 @@
 #include "instruction_database.hpp"
 #include "register.hpp"
 using json       = nlohmann::json;
-using AccessType = XpuBase::AccessType;
-using enum XpuBase::AccessType;
+using AccessType = ProcessorBase::AccessType;
+using enum ProcessorBase::AccessType;
 
 Cpu::Cpu() {}
 
@@ -54,11 +54,11 @@ void Cpu::exec() {
             throw std::logic_error("unofficial opcode");
     }
     // store
-    if (check_bits("100_xxx_xx", opcode)) {
+    if ((0b11100000 & opcode) >> 5 == 0b100) {
         store8(effective_addr, *reg_arg);
     }
     // load
-    else if (check_bits("101_xxx_xx", opcode)) {
+    else if ((0b11100000 & opcode) >> 5 == 0b101) {
         *reg_arg = load8(effective_addr);
     }
 
