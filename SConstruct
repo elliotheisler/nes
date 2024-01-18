@@ -19,5 +19,9 @@ env.Tool('compilation_db')
 env.CompilationDatabase()
 
 env.Program( target='bin/test_cpu'
-            , source = ['build/test/test_cpu.cpp', 'build/instruction_database.cpp', 'build/Cpu.cpp', 'build/common.cpp', 'build/CpuAndPpu.cpp']
+            , source = ['build/test/test_cpu.cpp', 'build/instruction_database.cpp', 'build/Cpu.cpp', 'build/register.cpp']
+            )
+
+env.Program( target='bin/test_Cartridge'
+            , source = ['build/test/test_Cartridge.cpp', 'build/Cartridge.cpp']
             )

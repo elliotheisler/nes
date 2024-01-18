@@ -1,33 +1,15 @@
 [
     {
-        "command": "clang++ -o build/test_check_bits.o -c -std=c++20 -Isrc/include -Ilib/json/single_include/nlohmann src/test_check_bits.cpp",
+        "command": "clang++ -o build/test/test_cpu.o -c -std=c++20 -Isrc/include -Ilib/json/single_include/nlohmann src/test/test_cpu.cpp",
         "directory": "/home/elliot/programming/stuff/nes",
-        "file": "src/test_check_bits.cpp",
-        "output": "build/test_check_bits.o"
-    },
-    {
-        "command": "clang++ -o build/common.o -c -std=c++20 -Isrc/include -Ilib/json/single_include/nlohmann src/common.cpp",
-        "directory": "/home/elliot/programming/stuff/nes",
-        "file": "src/common.cpp",
-        "output": "build/common.o"
-    },
-    {
-        "command": "clang++ -o build/json_test.o -c -std=c++20 -Isrc/include -Ilib/json/single_include/nlohmann src/json_test.cpp",
-        "directory": "/home/elliot/programming/stuff/nes",
-        "file": "src/json_test.cpp",
-        "output": "build/json_test.o"
+        "file": "src/test/test_cpu.cpp",
+        "output": "build/test/test_cpu.o"
     },
     {
         "command": "clang++ -o build/instruction_database.o -c -std=c++20 -Isrc/include -Ilib/json/single_include/nlohmann src/instruction_database.cpp",
         "directory": "/home/elliot/programming/stuff/nes",
         "file": "src/instruction_database.cpp",
         "output": "build/instruction_database.o"
-    },
-    {
-        "command": "clang++ -o build/test_cpu.o -c -std=c++20 -Isrc/include -Ilib/json/single_include/nlohmann src/test_cpu.cpp",
-        "directory": "/home/elliot/programming/stuff/nes",
-        "file": "src/test_cpu.cpp",
-        "output": "build/test_cpu.o"
     },
     {
         "command": "clang++ -o build/Cpu.o -c -std=c++20 -Isrc/include -Ilib/json/single_include/nlohmann src/Cpu.cpp",
@@ -36,27 +18,21 @@
         "output": "build/Cpu.o"
     },
     {
-        "command": "clang++ -o build/common.o -c -std=c++20 -Isrc/include -Ilib/json/single_include/nlohmann src/common.cpp",
+        "command": "clang++ -o build/register.o -c -std=c++20 -Isrc/include -Ilib/json/single_include/nlohmann src/register.cpp",
         "directory": "/home/elliot/programming/stuff/nes",
-        "file": "src/common.cpp",
-        "output": "build/common.o"
+        "file": "src/register.cpp",
+        "output": "build/register.o"
     },
     {
-        "command": "clang++ -o build/CpuAndPpu.o -c -std=c++20 -Isrc/include -Ilib/json/single_include/nlohmann src/CpuAndPpu.cpp",
+        "command": "clang++ -o build/test/test_Cartridge.o -c -std=c++20 -Isrc/include -Ilib/json/single_include/nlohmann src/test/test_Cartridge.cpp",
         "directory": "/home/elliot/programming/stuff/nes",
-        "file": "src/CpuAndPpu.cpp",
-        "output": "build/CpuAndPpu.o"
+        "file": "src/test/test_Cartridge.cpp",
+        "output": "build/test/test_Cartridge.o"
     },
     {
-        "command": "clang++ -o build/test_instdb.o -c -std=c++20 -Isrc/include -Ilib/json/single_include/nlohmann src/test_instdb.cpp",
+        "command": "clang++ -o build/Cartridge.o -c -std=c++20 -Isrc/include -Ilib/json/single_include/nlohmann src/Cartridge.cpp",
         "directory": "/home/elliot/programming/stuff/nes",
-        "file": "src/test_instdb.cpp",
-        "output": "build/test_instdb.o"
-    },
-    {
-        "command": "clang++ -o build/instruction_database.o -c -std=c++20 -Isrc/include -Ilib/json/single_include/nlohmann src/instruction_database.cpp",
-        "directory": "/home/elliot/programming/stuff/nes",
-        "file": "src/instruction_database.cpp",
-        "output": "build/instruction_database.o"
+        "file": "src/Cartridge.cpp",
+        "output": "build/Cartridge.o"
     }
 ]
