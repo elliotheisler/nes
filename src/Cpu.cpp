@@ -3,34 +3,32 @@
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
+#include <optional>
 #include <stdexcept>
 #include <string>
 
+#include "Cartridge.hpp"
 #include "Mapper.hpp"
 #include "instruction_database.hpp"
-#include "register.hpp"
-using json       = nlohmann::json;
-using AccessType = ProcessorBase::AccessType;
-using enum ProcessorBase::AccessType;
 
-Cpu::Cpu() {}
+using json = nlohmann::json;
 
-Cpu::Cpu(uint8_t m_A, uint8_t m_Y, uint8_t m_X, uint8_t m_SP, uint8_t m_SR,
-         uint16_t m_PC)
-    : A{m_A}, Y{m_Y}, X{m_X}, SP{m_SP}, SR{m_SR}, PC{m_PC} {}
+Cpu::Cpu(Cartridge& p_cartridge)
+    : cartridge{p_cartridge}, PC{0}, A{0}, SP{0}, X{0}, Y{0}, SR{0} {
+    do_poweron();
+};
 
 void Cpu::clock() {
     counter++;
     cycles_elapsed++;
     if (get_cycles(load8(PC)) == counter) {
         exec();
+        log_nintendulator();
         counter = 0;
     }
-    log_nintendulator();
 }
 
 void Cpu::exec() {
-    std::cout << "exec\n";
     // https://llx.com/Neil/a2/opcodes.html
     const uint8_t opcode = load8(PC);
     const int cycles     = get_cycles(opcode);
@@ -39,7 +37,7 @@ void Cpu::exec() {
 
     // load and store
     uint8_t* reg_arg;
-    r16 effective_addr = get_effective_addr(mode);
+    std::optional<Cpu::r16> effective_addr = get_effective_addr(mode);
     switch (opcode & 0b00000011) {
         case 0b00:
             reg_arg = &Y;
@@ -53,17 +51,16 @@ void Cpu::exec() {
         default:
             throw std::logic_error("unofficial opcode");
     }
-    // store
+    // stores: have 8th bit set
     if ((0b11100000 & opcode) >> 5 == 0b100) {
-        store8(effective_addr, *reg_arg);
+        store8(effective_addr.value(), *reg_arg);
     }
-    // load
+    // loads: have 8th and 6th bits set
     else if ((0b11100000 & opcode) >> 5 == 0b101) {
-        *reg_arg = load8(effective_addr);
+        *reg_arg = load8(effective_addr.value());
     }
 
     PC = PC + num_bytes;
-    log_nintendulator();
 }
 
 AddrMode Cpu::get_mode(uint8_t opcode) { return inst_db[opcode].adr_mode; }
@@ -76,9 +73,14 @@ uint8_t Cpu::get_affected_flags(uint8_t opcode) {  // TODO
     return 0;
 }
 
-r16 Cpu::get_effective_addr(AddrMode m) {
+std::string Cpu::to_assembly(const uint8_t opcode) {
+    const InstRecord i_record = inst_db[opcode];
+    return i_record.name;
+}
+
+std::optional<Cpu::r16> Cpu::get_effective_addr(AddrMode m) {
     using enum PageWrap;
-    r16 addr{0x0000};
+    Cpu::r16 addr{0x0000};
     switch (m) {
         case mZeroPage:
             addr = load8(PC + 1);
@@ -123,31 +125,30 @@ r16 Cpu::get_effective_addr(AddrMode m) {
             break;
         case mRelative:
             addr        = PC;
-            addr.index += static_cast<int8_t>(load8(PC + 1));
+            addr.index += load8(PC + 1);
             break;
         case mAccumulator:
-            throw std::logic_error(
-                "accumulator mode does not have an effective address");
         case mImplied:
-            throw std::logic_error(
-                "implied mode does not have an effective address");
+            return std::nullopt;
     }
     return addr;
 }
 
 void Cpu::do_poweron() {
     // https://www.nesdev.org/wiki/CPU_power_up_state#At_power-up
-    //     SR = 0b00110100;
-    //     A = X = Y = 0x00;
-    //     SP        = 0b11111101;
-    //     store8(0x4017, 0);  // frame irq enabled
-    //     store8(0x4015, 0);  // all channels disabled
-    //     for (uint16_t addr = 0x4000; addr <= 0x4005; addr++) {
-    //         store8(addr, 0);
-    //     }
-    //     for (uint16_t addr = 0x4010; addr <= 0x4013; addr++) {
-    //         store8(addr, 0);
-    //     }
+    cycles_elapsed = 7; /* nestest.log starts with 7 cycles elapsed, so I assume
+                           the poweron sequence is like BRK and INT */
+    SR = 0b00110100;
+    A = X = Y = 0x00;
+    SP        = 0b11111101;
+    store8(0x4017, 0);  // frame irq enabled
+    store8(0x4015, 0);  // all channels disabled
+    for (uint16_t addr = 0x4000; addr <= 0x4005; addr++) {
+        store8(addr, 0);
+    }
+    for (uint16_t addr = 0x4010; addr <= 0x4013; addr++) {
+        store8(addr, 0);
+    }
     // TODO:
     //     All 15 bits of noise channel LFSR = $0000[5]. The first time the LFSR
     //     is clocked from the all-0s state, it will shift in a 1. APU Frame
@@ -166,6 +167,7 @@ void Cpu::do_poweron() {
     //         the PowerPak may partially or fully initialize RAM before
     //         starting a program, so an NES programmer must be careful not to
     //         rely on the startup contents of RAM.
+    log_nintendulator();
 }
 
 void Cpu::do_reset() {
@@ -184,9 +186,9 @@ void Cpu::do_reset() {
     //         2A03letterless: APU frame counter retains old value [6]
 }
 
-r16 Cpu::load16(r16 addr, PageWrap pw) {
+Cpu::r16 Cpu::load16(r16 addr, PageWrap pw) {
     using enum Cpu::PageWrap;
-    r16 ret{0x0000};
+    Cpu::r16 ret{0x0000};
     ret.index = load8(addr);
     switch (pw) {
         case kDoPageWrap:
@@ -198,12 +200,10 @@ r16 Cpu::load16(r16 addr, PageWrap pw) {
     ret.page = load8(addr);
     return ret;
 }
-
-uint8_t Cpu::load8(r16 addr) { return addr_access<kLoad>(addr, 0); }
-
+// TODO: could add load/stores for zero page i.e. load8(addr.index);
 uint8_t Cpu::load8(uint16_t addr) { return addr_access<kLoad>(addr, 0); }
 
-void Cpu::store8(r16 addr, uint8_t payload) {
+void Cpu::store8(uint16_t addr, uint8_t payload) {
     addr_access<kStore>(addr, payload);
 }
 template <AccessType A>
@@ -224,25 +224,66 @@ uint8_t Cpu::addr_access(uint16_t addr, uint8_t payload) {
             break;
         default:
             if (addr > 0b0100000000011111) {
-                // After the first 4 * 8 bytes: cartridge space
+                // FINALLY: cartridge space
+                return cartridge.cpu_access<A>(addr, payload);
             } else if ((addr & 0b11000) == 0b11000) {
-                // 8 bytes: APU and I/O functionality that is normally disabled.
-                // See CPU Test Mode.
+                // SECOND; 8 bytes: "APU and I/O functionality that is normally
+                // disabled." See CPU Test Mode
             } else {
-                // First 3 * 8 bytes: NES APU and I/O registers
+                // FIRST 3 * 8 bytes: NES APU and I/O registers
             }
     }
     return 0;
 }
 
+// =================logging
+
 void Cpu::log_nintendulator() {
-    fprintf(stdout, "%04X A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d\n",
-            static_cast<unsigned int>(PC), A, X, Y, SR, SP, cycles_elapsed);
-    //     std::cout << std::vformat(
-    //         "{} A:{}, X:{}, Y:{}, P:{}, SP:{}, CYC:{}\n",
-    //         std::make_format_args(PC, A, X, Y, SR, SP, cycles_elapsed));
+    fprintf(stdout, "%02X%02X %s A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d\n",
+            PC.page, PC.index, inst_db[load8(PC)].name.c_str(), A, X, Y, SR, SP,
+            cycles_elapsed);
 }
 
-// json database stuff
+// =====================json database stuff
 
 const std::array<InstRecord, 256> Cpu::inst_db{read_inst_db(INST_JSON_PATH)};
+
+// ===================r16 type
+
+Cpu::r16::r16(uint16_t i) {
+    page  = i >> 8;
+    index = i & 0b11111111;
+}
+
+Cpu::r16 Cpu::r16::operator+(uint8_t other) {
+    r16 next{*this};
+    next.index += other;
+    if (next.index < this->index) next.page++;
+    return next;
+}
+
+Cpu::r16 Cpu::r16::operator+(int other) {
+    r16 next{*this};
+    next.index += other;
+    if (next.index < this->index) next.page++;
+    return next;
+}
+
+Cpu::r16 Cpu::r16::operator++(int) { return operator+(1); }
+
+Cpu::r16 Cpu::r16::operator=(uint8_t val) {
+    page  = 0;
+    index = val;
+    return *this;
+}
+
+Cpu::r16 Cpu::r16::operator+=(uint8_t val) {
+    r16 ret{0};
+    ret.page  = page;
+    ret.index = index + val;
+    return ret;
+}
+
+Cpu::r16::operator uint16_t() const {
+    return (static_cast<uint16_t>(page) << 8) | index;
+}

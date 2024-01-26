@@ -1,11 +1,43 @@
 #pragma once
 #include <cstdint>
 
+#include "Cartridge.hpp"
 #include "Mapper.hpp"
+#include "common.hpp"
 #include "instruction_database.hpp"
-#include "register.hpp"
+
 using json = nlohmann::json;
-class Cpu : public ProcessorBase {
+class Cpu {
+   public:
+    /*! class for 16-bit registers in the CPU. encapsulates the
+     * 8-bit page wraparound when adding address offsets, as seen in
+     * some of the addressing modes.
+     */
+    class r16 {
+       public:
+        uint8_t page;
+        uint8_t index;
+        r16(uint16_t i);
+        operator uint16_t() const;
+
+        r16 operator+(uint8_t other);
+        r16 operator+(int other);
+
+        r16 operator++(int);
+
+        r16 operator=(uint8_t val);
+        r16 operator+=(uint8_t val);
+        /*
+* types of atomic address accesses that occur
+* as part of the various addressing modes
+u8  -> u8  - (8bit address with 8bit result ex: zero page)
+u16 -> u8  - etc...
+u8  -> u16 w ...
+u16 -> u16 w (16bit address with 16bit result, with pagewrap)
+u16 -> u16 - (16bit address with 16bit result, no pagewrap)
+*/
+    };
+
    public:
     enum class CpuFlag {
         fCarry            = 1 << 0,
@@ -19,7 +51,7 @@ class Cpu : public ProcessorBase {
         fNegative    = 1 << 7,
     };
 
-    Cpu();  // TODO: Cartridge parameter
+    Cpu(Cartridge& p_cartridge);
     Cpu(uint8_t m_A, uint8_t m_Y, uint8_t m_X, uint8_t m_SP, uint8_t m_SR,
         uint16_t m_PC);
 
@@ -30,13 +62,13 @@ class Cpu : public ProcessorBase {
 
     void clock();
 
-   private:
-    static const std::array<InstRecord, 256> inst_db;
-
     uint8_t A, Y, X, SP, SR;
     r16 PC = 0x0000;
 
-    // TODO: Cartridge cartridge;
+   private:
+    static const std::array<InstRecord, 256> inst_db;
+
+    Cartridge& cartridge;
     // only the cpu communicates with the APU and the NES's 2kb of RAM
     // TODO: Apu apu
     uint8_t RAM[1 << 11];
@@ -50,13 +82,12 @@ class Cpu : public ProcessorBase {
     AddrMode get_mode(uint8_t opcode);
     uint8_t get_affected_flags(uint8_t opcode);
     // load/store
-    r16 get_effective_addr(AddrMode m);
+    std::optional<r16> get_effective_addr(AddrMode m);
     enum class PageWrap { kDoPageWrap, kNoPageWrap };
 
     r16 load16(r16 addr, PageWrap pw);
-    uint8_t load8(r16 addr);
     uint8_t load8(uint16_t addr);
-    void store8(r16 addr, uint8_t payload);
+    void store8(uint16_t addr, uint8_t payload);  // TODO: pagewrap?
 
     template <AccessType A>
     uint8_t addr_access(uint16_t addr, uint8_t payload);
@@ -66,5 +97,7 @@ class Cpu : public ProcessorBase {
     void set_flag(CpuFlag flag, bool val);
 
     int cycles_elapsed;
+    // logging
+    std::string to_assembly(const uint8_t opcode);
     void log_nintendulator();
 };

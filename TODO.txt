@@ -1,4 +1,5 @@
 - put instruction_database in its own namespace
+- refactor: const-qualify appropriate parameters, functions, variables
 1. parse and load nes files
 2. test and verify cpu
 4. ppu
