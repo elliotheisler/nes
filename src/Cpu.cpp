@@ -247,9 +247,29 @@ uint8_t Cpu::addr_access(uint16_t addr, uint8_t payload) {
 // =================logging
 
 void Cpu::log_nintendulator() {
-    fprintf(stdout, "%02X%02X %s A:%02X X:%02X Y:%02X P:%02X SP:%02X CYC:%d\n",
-            PC.page, PC.index, inst_db[load8(PC)].name.c_str(), A, X, Y, SR, SP,
-            cycles_elapsed);
+    const uint8_t num_bytes = inst_db[load8(PC)].bytes;
+    std::stringstream arg1{};
+    std::stringstream arg2{};
+    // https://stackoverflow.com/a/25144137
+    if (num_bytes >= 2) {
+        arg1 << std::uppercase << std::setfill('0') << std::setw(2) << std::hex
+             << static_cast<unsigned int>(load8(PC + 1));
+    } else {
+        arg1 << "  ";
+    }
+    if (num_bytes >= 3) {
+        arg2 << std::uppercase << std::setfill('0') << std::setw(2) << std::hex
+             << static_cast<unsigned int>(load8(PC + 2));
+    } else {
+        arg2 << "  ";
+    }
+
+    fprintf(stdout,
+            "%02X%02X %02X %2s %2s %-32sA:%02X X:%02X Y:%02X P:%02X SP:%02X "
+            "CYC:%d\n",
+            PC.page, PC.index, inst_db[load8(PC)].opcode, arg1.str().c_str(),
+            arg2.str().c_str(), inst_db[load8(PC)].name.c_str(), A, X, Y, SR,
+            SP, cycles_elapsed);
 }
 
 // =====================json database
