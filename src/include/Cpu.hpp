@@ -5,39 +5,10 @@
 #include "Mapper.hpp"
 #include "common.hpp"
 #include "instruction_database.hpp"
+#include "r16.hpp"
 
 using json = nlohmann::json;
 class Cpu {
-   public:
-    /*! class for 16-bit registers in the CPU. encapsulates the
-     * 8-bit page wraparound when adding address offsets, as seen in
-     * some of the addressing modes.
-     */
-    class r16 {
-       public:
-        uint8_t page;
-        uint8_t index;
-        r16(uint16_t i);
-        operator uint16_t() const;
-
-        r16 operator+(uint8_t other);
-        r16 operator+(int other);
-
-        r16 operator++(int);
-
-        r16 operator=(uint8_t val);
-        r16 operator+=(uint8_t val);
-        /*
-* types of atomic address accesses that occur
-* as part of the various addressing modes
-u8  -> u8  - (8bit address with 8bit result ex: zero page)
-u16 -> u8  - etc...
-u8  -> u16 w ...
-u16 -> u16 w (16bit address with 16bit result, with pagewrap)
-u16 -> u16 - (16bit address with 16bit result, no pagewrap)
-*/
-    };
-
    public:
     enum class CpuFlag {
         fCarry            = 1 << 0,
@@ -63,7 +34,7 @@ u16 -> u16 - (16bit address with 16bit result, no pagewrap)
     void clock();
 
     uint8_t A, Y, X, SP, SR;
-    r16 PC = 0x0000;
+    r16 PC;
 
    private:
     static const std::array<InstRecord, 256> inst_db;
@@ -90,7 +61,7 @@ u16 -> u16 - (16bit address with 16bit result, no pagewrap)
     void store8(uint16_t addr, uint8_t payload);  // TODO: pagewrap?
 
     template <AccessType A>
-    uint8_t addr_access(uint16_t addr, uint8_t payload);
+    uint8_t addr_access(uint16_t addr, uint8_t payload = 0);
 
     // flag functions
     bool get_flag(CpuFlag flag);

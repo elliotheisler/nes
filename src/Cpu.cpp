@@ -29,37 +29,49 @@ void Cpu::clock() {
 }
 
 void Cpu::exec() {
+    using enum PageWrap;
     // https://llx.com/Neil/a2/opcodes.html
+    r16 effective_addr   = 0x0000;
     const uint8_t opcode = load8(PC);
     const int cycles     = get_cycles(opcode);
     const int num_bytes  = get_num_bytes(opcode);
     const AddrMode mode  = get_mode(opcode);
-
-    // load and store
-    uint8_t* reg_arg;
-    std::optional<Cpu::r16> effective_addr = get_effective_addr(mode);
-    switch (opcode & 0b00000011) {
-        case 0b00:
-            reg_arg = &Y;
-            break;
-        case 0b01:
-            reg_arg = &X;
-            break;
-        case 0b10:
-            reg_arg = &A;
-            break;
-        default:
-            throw std::logic_error("unofficial opcode");
-    }
-    // stores: have 8th bit set
-    if ((0b11100000 & opcode) >> 5 == 0b100) {
-        store8(effective_addr.value(), *reg_arg);
-    }
-    // loads: have 8th and 6th bits set
-    else if ((0b11100000 & opcode) >> 5 == 0b101) {
-        *reg_arg = load8(effective_addr.value());
+    // 2 JMP instructions
+    if (opcode & 0b01001100) {
+        effective_addr = load16(PC + 1, kNoPageWrap);
+        if (opcode == 0b01101100) {  // indirect absolute
+            effective_addr = load16(effective_addr, kDoPageWrap);
+        }
+        printf("%2x%2x\n", effective_addr.page, effective_addr.index);
+        PC = effective_addr;
+        return;
     }
 
+    // loads and stores
+    // uint8_t* reg_arg;
+    // effective_addr = get_effective_addr(mode);
+    // switch (opcode & 0b00000011) {
+    //     case 0b00:
+    //         reg_arg = &Y;
+    //         break;
+    //     case 0b01:
+    //         reg_arg = &X;
+    //         break;
+    //     case 0b10:
+    //         reg_arg = &A;
+    //         break;
+    //     default:
+    //         throw std::logic_error("unofficial opcode: cc == 11");
+    // }
+    // // stores: have 8th bit set
+    // if ((opcode >> 5) == 0b100) {
+    //     store8(effective_addr.value(), *reg_arg);
+    // }
+    // // loads: have 8th and 6th bits set
+    // else if ((opcode >> 5) == 0b101) {
+    //     *reg_arg = load8(effective_addr.value());
+    // }
+    // all other instructions TODO
     PC = PC + num_bytes;
 }
 
@@ -78,9 +90,9 @@ std::string Cpu::to_assembly(const uint8_t opcode) {
     return i_record.name;
 }
 
-std::optional<Cpu::r16> Cpu::get_effective_addr(AddrMode m) {
+std::optional<r16> Cpu::get_effective_addr(AddrMode m) {
     using enum PageWrap;
-    Cpu::r16 addr{0x0000};
+    r16 addr;
     switch (m) {
         case mZeroPage:
             addr = load8(PC + 1);
@@ -107,17 +119,17 @@ std::optional<Cpu::r16> Cpu::get_effective_addr(AddrMode m) {
             break;
 
         case mIndirect:
-            addr.index = load8(PC + 1);
-            addr       = load16(addr, kDoPageWrap);
+            addr = load8(PC + 1);
+            addr = load16(addr, kDoPageWrap);
         case mIndirectX:
             addr        = load8(PC + 1);
             addr.index += X;
             addr        = load16(addr, kDoPageWrap);
             break;
         case mIndirectY:
-            addr.index  = load8(PC + 1);
-            addr        = load16(addr, kDoPageWrap);
-            addr       += Y;
+            addr  = load8(PC + 1);
+            addr  = load16(addr, kDoPageWrap);
+            addr += Y;
             break;
 
         case mImmediate:
@@ -186,9 +198,9 @@ void Cpu::do_reset() {
     //         2A03letterless: APU frame counter retains old value [6]
 }
 
-Cpu::r16 Cpu::load16(r16 addr, PageWrap pw) {
+r16 Cpu::load16(r16 addr, PageWrap pw) {
     using enum Cpu::PageWrap;
-    Cpu::r16 ret{0x0000};
+    r16 ret;
     ret.index = load8(addr);
     switch (pw) {
         case kDoPageWrap:
@@ -201,7 +213,7 @@ Cpu::r16 Cpu::load16(r16 addr, PageWrap pw) {
     return ret;
 }
 // TODO: could add load/stores for zero page i.e. load8(addr.index);
-uint8_t Cpu::load8(uint16_t addr) { return addr_access<kLoad>(addr, 0); }
+uint8_t Cpu::load8(uint16_t addr) { return addr_access<kLoad>(addr); }
 
 void Cpu::store8(uint16_t addr, uint8_t payload) {
     addr_access<kStore>(addr, payload);
@@ -244,46 +256,6 @@ void Cpu::log_nintendulator() {
             cycles_elapsed);
 }
 
-// =====================json database stuff
+// =====================json database
 
 const std::array<InstRecord, 256> Cpu::inst_db{read_inst_db(INST_JSON_PATH)};
-
-// ===================r16 type
-
-Cpu::r16::r16(uint16_t i) {
-    page  = i >> 8;
-    index = i & 0b11111111;
-}
-
-Cpu::r16 Cpu::r16::operator+(uint8_t other) {
-    r16 next{*this};
-    next.index += other;
-    if (next.index < this->index) next.page++;
-    return next;
-}
-
-Cpu::r16 Cpu::r16::operator+(int other) {
-    r16 next{*this};
-    next.index += other;
-    if (next.index < this->index) next.page++;
-    return next;
-}
-
-Cpu::r16 Cpu::r16::operator++(int) { return operator+(1); }
-
-Cpu::r16 Cpu::r16::operator=(uint8_t val) {
-    page  = 0;
-    index = val;
-    return *this;
-}
-
-Cpu::r16 Cpu::r16::operator+=(uint8_t val) {
-    r16 ret{0};
-    ret.page  = page;
-    ret.index = index + val;
-    return ret;
-}
-
-Cpu::r16::operator uint16_t() const {
-    return (static_cast<uint16_t>(page) << 8) | index;
-}

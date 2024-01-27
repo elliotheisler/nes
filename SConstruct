@@ -34,3 +34,7 @@ env_debug.Program(target='bin/test_Cpu-dbg', source=objs_dbg)
 env.Program( target='bin/test_Cartridge'
             , source = ['build/test/test_Cartridge.cpp', 'build/Cartridge.cpp']
             )
+
+env.Program( target='bin/test_r16'
+, source = ['build/test/test_r16.cpp', 'build/r16.cpp']
+)
