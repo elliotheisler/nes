@@ -13,10 +13,7 @@
 
 using json = nlohmann::json;
 
-Cpu::Cpu(Cartridge& p_cartridge)
-    : cartridge{p_cartridge}, PC{0}, A{0}, SP{0}, X{0}, Y{0}, SR{0} {
-    do_poweron();
-};
+Cpu::Cpu(Cartridge& p_cartridge) : cartridge{p_cartridge}, A{0}, X{0}, Y{0} {};
 
 void Cpu::clock() {
     counter++;
@@ -42,7 +39,6 @@ void Cpu::exec() {
         if (opcode == 0b01101100) {  // indirect absolute
             effective_addr = load16(effective_addr, kDoPageWrap);
         }
-        printf("%2x%2x\n", effective_addr.page, effective_addr.index);
         PC = effective_addr;
         return;
     }

@@ -21,13 +21,15 @@ env_debug.Append(CXXFLAGS=['-g', '-O0'])
 
 env.VariantDir('build', 'src', duplicate=0)
 
-test_cpu_src = ['build/test/test_Cpu.cpp', 'build/instruction_database.cpp', 'build/Cpu.cpp', 'build/Cartridge.cpp']
+test_cpu_src = ['build/test/test_Cpu.cpp', 'build/instruction_database.cpp', 'build/Cpu.cpp', 'build/Cartridge.cpp', 'build/r16.cpp']
 env.Program( target='bin/test_Cpu'
-            , source = ['build/test/test_Cpu.cpp', 'build/instruction_database.cpp', 'build/Cpu.cpp', 'build/Cartridge.cpp']
+            , source = test_cpu_src
             )
 
 objs_dbg = [
-        env_debug.Object(ofile, srcfile) for ofile, srcfile in zip(['test_Cpu-dbg', 'instruction_database-dbg', 'Cpu-dbg', 'Cartridge-dbg'], test_cpu_src)
+        env_debug.Object(ofile, srcfile) for ofile, srcfile in zip(
+                ['test_Cpu-dbg', 'instruction_database-dbg', 'Cpu-dbg', 'Cartridge-dbg', 'r16-dbg'], test_cpu_src
+                )
 ]
 env_debug.Program(target='bin/test_Cpu-dbg', source=objs_dbg)
 

@@ -21,12 +21,11 @@ class Cpu {
         fOverflow    = 1 << 6,
         fNegative    = 1 << 7,
     };
+    explicit Cpu(Cartridge& p_cartridge);
+    explicit Cpu(uint8_t m_A, uint8_t m_Y, uint8_t m_X, uint8_t m_SP,
+                 uint8_t m_SR, uint16_t m_PC);
 
-    Cpu(Cartridge& p_cartridge);
-    Cpu(uint8_t m_A, uint8_t m_Y, uint8_t m_X, uint8_t m_SP, uint8_t m_SR,
-        uint16_t m_PC);
-
-    // set cpu to power-on state
+    // perform state changes equivalent to CPU poweron
     void do_poweron();
     // perform state changes equivalent to hitting the NES reset button
     void do_reset();
@@ -44,7 +43,7 @@ class Cpu {
     // TODO: Apu apu
     uint8_t RAM[1 << 11];
 
-    int counter;
+    int counter{0};
 
     // execute current instruction
     void exec();
@@ -67,7 +66,7 @@ class Cpu {
     bool get_flag(CpuFlag flag);
     void set_flag(CpuFlag flag, bool val);
 
-    int cycles_elapsed;
+    int cycles_elapsed{0};
     // logging
     std::string to_assembly(const uint8_t opcode);
     void log_nintendulator();
