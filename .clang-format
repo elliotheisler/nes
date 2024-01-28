@@ -11,3 +11,17 @@ AlignConsecutiveAssignments:
   Enabled: true
   AlignCompound: true
   PadOperators: true
+
+MaxEmptyLinesToKeep: 3
+NamespaceIndentation: All
+SeparateDefinitionBlocks: Always
+
+SpacesInLineCommentPrefix:
+  Minimum: 1
+
+SpacesInParentheses: true
+
+# AlignConsecutiveDeclarations:
+#   Enabled: true
+#   AcrossEmptyLines: true
+#   AcrossComments: false

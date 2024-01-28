@@ -8,17 +8,19 @@
 #include <string>
 
 #include "Cartridge.hpp"
-#include "Mapper.hpp"
-#include "instruction_database.hpp"
+#include "InstructionDatabase.hpp"
 
-using json = nlohmann::json;
+using json     = nlohmann::json;
+using AddrMode = Instruction::AddrMode;
+using enum Instruction::AddrMode;
 
-Cpu::Cpu(Cartridge& p_cartridge) : cartridge{p_cartridge}, A{0}, X{0}, Y{0} {};
+Cpu::Cpu( Cartridge &p_cartridge )
+    : cartridge{ p_cartridge }, A{ 0 }, X{ 0 }, Y{ 0 } {};
 
 void Cpu::clock() {
     counter++;
     cycles_elapsed++;
-    if (get_cycles(load8(PC)) == counter) {
+    if ( get_cycles( load8( PC ) ) == counter ) {
         exec();
         log_nintendulator();
         counter = 0;
@@ -29,15 +31,15 @@ void Cpu::exec() {
     using enum PageWrap;
     // https://llx.com/Neil/a2/opcodes.html
     r16 effective_addr   = 0x0000;
-    const uint8_t opcode = load8(PC);
-    const int cycles     = get_cycles(opcode);
-    const int num_bytes  = get_num_bytes(opcode);
-    const AddrMode mode  = get_mode(opcode);
+    const uint8_t opcode = load8( PC );
+    const int cycles     = get_cycles( opcode );
+    const int num_bytes  = get_num_bytes( opcode );
+    const AddrMode mode  = get_mode( opcode );
     // 2 JMP instructions
-    if (opcode & 0b01001100) {
-        effective_addr = load16(PC + 1, kNoPageWrap);
-        if (opcode == 0b01101100) {  // indirect absolute
-            effective_addr = load16(effective_addr, kDoPageWrap);
+    if ( opcode & 0b01001100 ) {
+        effective_addr = load16( PC + 1, kNoPageWrap );
+        if ( opcode == 0b01101100 ) {  // indirect absolute
+            effective_addr = load16( effective_addr, kDoPageWrap );
         }
         PC = effective_addr;
         return;
@@ -71,60 +73,66 @@ void Cpu::exec() {
     PC = PC + num_bytes;
 }
 
-AddrMode Cpu::get_mode(uint8_t opcode) { return inst_db[opcode].adr_mode; }
+AddrMode Cpu::get_mode( uint8_t opcode ) {
+    return Instruction::TABLE[opcode].adr_mode;
+}
 
-int Cpu::get_cycles(uint8_t opcode) { return inst_db[opcode].cycles; }
+int Cpu::get_cycles( uint8_t opcode ) {
+    return Instruction::TABLE[opcode].cycles;
+}
 
-int Cpu::get_num_bytes(uint8_t opcode) { return inst_db[opcode].bytes; }
+int Cpu::get_num_bytes( uint8_t opcode ) {
+    return Instruction::TABLE[opcode].bytes;
+}
 
-uint8_t Cpu::get_affected_flags(uint8_t opcode) {  // TODO
+uint8_t Cpu::get_affected_flags( uint8_t opcode ) {  // TODO
     return 0;
 }
 
-std::string Cpu::to_assembly(const uint8_t opcode) {
-    const InstRecord i_record = inst_db[opcode];
+std::string Cpu::to_assembly( const uint8_t opcode ) {
+    const InstRecord i_record = Instruction::TABLE[opcode];
     return i_record.name;
 }
 
-std::optional<r16> Cpu::get_effective_addr(AddrMode m) {
+std::optional<r16> Cpu::get_effective_addr( AddrMode m ) {
     using enum PageWrap;
     r16 addr;
-    switch (m) {
+    switch ( m ) {
         case mZeroPage:
-            addr = load8(PC + 1);
+            addr = load8( PC + 1 );
             break;
         case mZeroPageX:
-            addr        = load8(PC + 1);
+            addr        = load8( PC + 1 );
             addr.index += X;
             break;
         case mZeroPageY:
-            addr        = load8(PC + 1);
+            addr        = load8( PC + 1 );
             addr.index += Y;
             break;
 
         case mAbsolute:
-            addr = load16(PC + 1, kNoPageWrap);
+            addr = load16( PC + 1, kNoPageWrap );
             break;
         case mAbsoluteX:
-            addr  = load16(PC + 1, kNoPageWrap);
+            addr  = load16( PC + 1, kNoPageWrap );
             addr += X;
             break;
         case mAbsoluteY:
-            addr  = load16(PC + 1, kNoPageWrap);
+            addr  = load16( PC + 1, kNoPageWrap );
             addr += Y;
             break;
 
         case mIndirect:
-            addr = load8(PC + 1);
-            addr = load16(addr, kDoPageWrap);
+            addr = load8( PC + 1 );
+            addr = load16( addr, kDoPageWrap );
         case mIndirectX:
-            addr        = load8(PC + 1);
+            addr        = load8( PC + 1 );
             addr.index += X;
-            addr        = load16(addr, kDoPageWrap);
+            addr        = load16( addr, kDoPageWrap );
             break;
         case mIndirectY:
-            addr  = load8(PC + 1);
-            addr  = load16(addr, kDoPageWrap);
+            addr  = load8( PC + 1 );
+            addr  = load16( addr, kDoPageWrap );
             addr += Y;
             break;
 
@@ -133,7 +141,7 @@ std::optional<r16> Cpu::get_effective_addr(AddrMode m) {
             break;
         case mRelative:
             addr        = PC;
-            addr.index += load8(PC + 1);
+            addr.index += load8( PC + 1 );
             break;
         case mAccumulator:
         case mImplied:
@@ -149,13 +157,13 @@ void Cpu::do_poweron() {
     SR = 0b00110100;
     A = X = Y = 0x00;
     SP        = 0b11111101;
-    store8(0x4017, 0);  // frame irq enabled
-    store8(0x4015, 0);  // all channels disabled
-    for (uint16_t addr = 0x4000; addr <= 0x4005; addr++) {
-        store8(addr, 0);
+    store8( 0x4017, 0 );  // frame irq enabled
+    store8( 0x4015, 0 );  // all channels disabled
+    for ( uint16_t addr = 0x4000; addr <= 0x4005; addr++ ) {
+        store8( addr, 0 );
     }
-    for (uint16_t addr = 0x4010; addr <= 0x4013; addr++) {
-        store8(addr, 0);
+    for ( uint16_t addr = 0x4010; addr <= 0x4013; addr++ ) {
+        store8( addr, 0 );
     }
     // TODO:
     //     All 15 bits of noise channel LFSR = $0000[5]. The first time the LFSR
@@ -194,33 +202,35 @@ void Cpu::do_reset() {
     //         2A03letterless: APU frame counter retains old value [6]
 }
 
-r16 Cpu::load16(r16 addr, PageWrap pw) {
+r16 Cpu::load16( r16 addr, PageWrap pw ) {
     using enum Cpu::PageWrap;
     r16 ret;
-    ret.index = load8(addr);
-    switch (pw) {
+    ret.index = load8( addr );
+    switch ( pw ) {
         case kDoPageWrap:
             addr.index++;
             break;
         case kNoPageWrap:
             addr++;
     }
-    ret.page = load8(addr);
+    ret.page = load8( addr );
     return ret;
 }
-// TODO: could add load/stores for zero page i.e. load8(addr.index);
-uint8_t Cpu::load8(uint16_t addr) { return addr_access<kLoad>(addr); }
 
-void Cpu::store8(uint16_t addr, uint8_t payload) {
-    addr_access<kStore>(addr, payload);
+// TODO: could add load/stores for zero page i.e. load8(addr.index);
+uint8_t Cpu::load8( uint16_t addr ) { return addr_access<kLoad>( addr ); }
+
+void Cpu::store8( uint16_t addr, uint8_t payload ) {
+    addr_access<kStore>( addr, payload );
 }
+
 template <AccessType A>
-uint8_t Cpu::addr_access(uint16_t addr, uint8_t payload) {
+uint8_t Cpu::addr_access( uint16_t addr, uint8_t payload ) {
     // https://www.nesdev.org/wiki/CPU_memory_map
 
-    switch (addr >> 13) {
+    switch ( addr >> 13 ) {
         case 0b000:  // 2 KB internal RAM
-            switch (A) {
+            switch ( A ) {
                 case kLoad:
                     return RAM[addr & 0b0000011111111111];
                 case kStore:
@@ -231,10 +241,10 @@ uint8_t Cpu::addr_access(uint16_t addr, uint8_t payload) {
             // actual_addr = addr & 0b0000000000000111;
             break;
         default:
-            if (addr > 0b0100000000011111) {
+            if ( addr > 0b0100000000011111 ) {
                 // FINALLY: cartridge space
-                return cartridge.cpu_access<A>(addr, payload);
-            } else if ((addr & 0b11000) == 0b11000) {
+                return cartridge.cpu_access<A>( addr, payload );
+            } else if ( ( addr & 0b11000 ) == 0b11000 ) {
                 // SECOND; 8 bytes: "APU and I/O functionality that is normally
                 // disabled." See CPU Test Mode
             } else {
@@ -247,31 +257,28 @@ uint8_t Cpu::addr_access(uint16_t addr, uint8_t payload) {
 // =================logging
 
 void Cpu::log_nintendulator() {
-    const uint8_t num_bytes = inst_db[load8(PC)].bytes;
+    const uint8_t num_bytes = Instruction::TABLE[load8( PC )].bytes;
     std::stringstream arg1{};
     std::stringstream arg2{};
     // https://stackoverflow.com/a/25144137
-    if (num_bytes >= 2) {
-        arg1 << std::uppercase << std::setfill('0') << std::setw(2) << std::hex
-             << static_cast<unsigned int>(load8(PC + 1));
+    if ( num_bytes >= 2 ) {
+        arg1 << std::uppercase << std::setfill( '0' ) << std::setw( 2 )
+             << std::hex << static_cast<unsigned int>( load8( PC + 1 ) );
     } else {
         arg1 << "  ";
     }
-    if (num_bytes >= 3) {
-        arg2 << std::uppercase << std::setfill('0') << std::setw(2) << std::hex
-             << static_cast<unsigned int>(load8(PC + 2));
+    if ( num_bytes >= 3 ) {
+        arg2 << std::uppercase << std::setfill( '0' ) << std::setw( 2 )
+             << std::hex << static_cast<unsigned int>( load8( PC + 2 ) );
     } else {
         arg2 << "  ";
     }
 
-    fprintf(stdout,
-            "%02X%02X %02X %2s %2s %-32sA:%02X X:%02X Y:%02X P:%02X SP:%02X "
-            "CYC:%d\n",
-            PC.page, PC.index, inst_db[load8(PC)].opcode, arg1.str().c_str(),
-            arg2.str().c_str(), inst_db[load8(PC)].name.c_str(), A, X, Y, SR,
-            SP, cycles_elapsed);
+    fprintf( stdout,
+             "%02X%02X %02X %2s %2s %-32sA:%02X X:%02X Y:%02X P:%02X SP:%02X "
+             "CYC:%d\n",
+             PC.page, PC.index, Instruction::TABLE[load8( PC )].opcode,
+             arg1.str().c_str(), arg2.str().c_str(),
+             Instruction::TABLE[load8( PC )].name.c_str(), A, X, Y, SR, SP,
+             cycles_elapsed );
 }
-
-// =====================json database
-
-const std::array<InstRecord, 256> Cpu::inst_db{read_inst_db(INST_JSON_PATH)};
