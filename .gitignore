@@ -1,5 +1,9 @@
+# general; tmp files, build files
 a.out
 *.o
+*.tmp
+
+
 .sconsign.dblite
 bin/
 .cache/

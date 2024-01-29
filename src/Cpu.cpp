@@ -8,13 +8,14 @@
 #include <string>
 
 #include "Cartridge.hpp"
+#include "Disassemble.hpp"
 #include "InstructionDatabase.hpp"
 
 using json     = nlohmann::json;
 using AddrMode = Instruction::AddrMode;
 using enum Instruction::AddrMode;
 
-Cpu::Cpu( Cartridge &p_cartridge )
+Cpu::Cpu( Cartridge& p_cartridge )
     : cartridge{ p_cartridge }, A{ 0 }, X{ 0 }, Y{ 0 } {};
 
 void Cpu::clock() {
@@ -255,30 +256,31 @@ uint8_t Cpu::addr_access( uint16_t addr, uint8_t payload ) {
 }
 
 // =================logging
+#include <format>
 
 void Cpu::log_nintendulator() {
-    const uint8_t num_bytes = Instruction::TABLE[load8( PC )].bytes;
-    std::stringstream arg1{};
-    std::stringstream arg2{};
-    // https://stackoverflow.com/a/25144137
-    if ( num_bytes >= 2 ) {
-        arg1 << std::uppercase << std::setfill( '0' ) << std::setw( 2 )
-             << std::hex << static_cast<unsigned int>( load8( PC + 1 ) );
-    } else {
-        arg1 << "  ";
-    }
-    if ( num_bytes >= 3 ) {
-        arg2 << std::uppercase << std::setfill( '0' ) << std::setw( 2 )
-             << std::hex << static_cast<unsigned int>( load8( PC + 2 ) );
-    } else {
-        arg2 << "  ";
-    }
+    using namespace Disassemble;
+    const uint8_t opcode = load8( PC );
+    const uint8_t arg1   = load8( PC + 1 );
+    const uint8_t arg2   = load8( PC + 2 );
+    const ParsedInst cur_inst{ PC, opcode, arg1, arg2 };
+    const InstRecord& record = cur_inst.record;
+
+    const std::string arg1str{
+        record.bytes < 2
+            ? ""
+            : std::vformat( "{:02X}", std::make_format_args( arg1 ) ) };
+
+    const std::string arg2str{
+        record.bytes < 3
+            ? ""
+            : std::vformat( "{:02X}", std::make_format_args( arg2 ) ) };
 
     fprintf( stdout,
-             "%02X%02X %02X %2s %2s %-32sA:%02X X:%02X Y:%02X P:%02X SP:%02X "
+             "%02X%02X  %02X %2s %2s  %-32sA:%02X X:%02X Y:%02X P:%02X SP:%02X "
+             //"PPU:%4s"
              "CYC:%d\n",
-             PC.page, PC.index, Instruction::TABLE[load8( PC )].opcode,
-             arg1.str().c_str(), arg2.str().c_str(),
-             Instruction::TABLE[load8( PC )].name.c_str(), A, X, Y, SR, SP,
+             PC.page, PC.index, opcode, arg1str.c_str(), arg2str.c_str(),
+             cur_inst.to_string().c_str(), A, X, Y, SR, SP,  // "        ",
              cycles_elapsed );
 }
