@@ -36,8 +36,8 @@ void Cpu::exec() {
     const int num_bytes               = get_num_bytes( opcode );
     const AddrMode mode               = get_mode( opcode );
     std::optional<r16> effective_addr = get_effective_addr( mode );
-    // 2 JMP instructions
-    if ( opcode & 0b01001100 ) {
+    // 2 JMP absolute and indirect
+    if ( opcode == 0b01001100 | opcode == 0b01101100 ) {
         PC = effective_addr.value();
         return;
     }
@@ -59,7 +59,6 @@ void Cpu::exec() {
     }
     // stores: have 8th bit set
     if ( ( opcode >> 5 ) == 0b100 ) {
-        std::cout << "yes\n";
         store8( effective_addr.value(), *reg_arg );
     }
     // loads: have 8th and 6th bits set

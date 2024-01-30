@@ -1,3 +1,5 @@
+#include "InstructionDatabase.hpp"
+
 #include <array>
 #include <bitset>
 #include <cstdint>
@@ -5,7 +7,6 @@
 #include <iostream>
 #include <optional>
 
-#include "InstructionDatabase.hpp"
 #include "json.hpp"
 using json = nlohmann::json;
 using namespace Instruction;
@@ -65,14 +66,13 @@ std::ostream& operator<<( std::ostream& os, const InstRecord& ir ) {
 void from_json( const json& j, InstRecord& ir ) {
     ir.name        = j.at( "name" ).template get<std::string>();
     ir.description = j.at( "description" ).template get<std::string>();
-    ir.opcode      = std::stoi(
-        j.at( "opcode" ).template get<std::string>().substr( 1 ), nullptr, 16 );
+    ir.opcode      = j.at( "opcode" ).template get<uint8_t>();
     ir.adr_mode =
         string2AddrMode( j.at( "mode" ).template get<std::string>() ).value();
-    ir.bytes =
-        std::stoi( j.at( "bytes" ).template get<std::string>(), nullptr );
-    ir.cycles =
-        std::stoi( j.at( "cycles" ).template get<std::string>(), nullptr );
+    ir.bytes  = j.at( "bytes" ).template get<int>();
+    ir.cycles = j.at( "cycles" ).at( "count" ).template get<int>();
+    ir.pagecross_cycle =
+        j.at( "cycles" ).at( "add_on_pagecross" ).template get<bool>();
 }
 
 const std::array<InstRecord, 256>& read_inst_db( const char* path ) {

@@ -4,7 +4,7 @@
 #include <string>
 
 #include "json.hpp"
-#define INST_JSON_PATH "mos6502/python_scraping/instructions.json"
+#define INST_JSON_PATH "src/instructions_1.json"
 using json = nlohmann::json;
 
 class InstRecord;  // forward decl for the TABLE array
@@ -41,6 +41,7 @@ class InstRecord {
     Instruction::AddrMode adr_mode;
     int bytes;
     int cycles;
+    bool pagecross_cycle;
 
     bool is_empty() const;
 };

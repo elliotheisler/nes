@@ -1,0 +1,3173 @@
+[
+  {
+    "name": "BRK",
+    "opcode": 0,
+    "description": "Force Interrupt",
+    "bytes": 1,
+    "mode": "Implied",
+    "cycles": {
+      "count": 7,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "(Indirect,X)",
+    "bytes": 2,
+    "description": "Logical Inclusive OR",
+    "name": "ORA",
+    "opcode": 1,
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "opcode": 5,
+    "name": "ORA",
+    "description": "Logical Inclusive OR",
+    "bytes": 2,
+    "mode": "ZeroPage",
+    "cycles": {
+      "count": 3,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "opcode": 6,
+    "name": "ASL",
+    "bytes": 2,
+    "description": "Arithmetic Shift Left",
+    "mode": "ZeroPage",
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "Implied",
+    "opcode": 8,
+    "name": "PHP",
+    "description": "Push Processor Status",
+    "bytes": 1,
+    "cycles": {
+      "count": 3,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "name": "ORA",
+    "opcode": 9,
+    "bytes": 2,
+    "description": "Logical Inclusive OR",
+    "mode": "Immediate",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "description": "Arithmetic Shift Left",
+    "bytes": 1,
+    "opcode": 10,
+    "name": "ASL",
+    "mode": "Accumulator",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "opcode": 13,
+    "name": "ORA",
+    "bytes": 3,
+    "description": "Logical Inclusive OR",
+    "mode": "Absolute",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "Absolute",
+    "description": "Arithmetic Shift Left",
+    "bytes": 3,
+    "name": "ASL",
+    "opcode": 14,
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "Relative",
+    "opcode": 16,
+    "name": "BPL",
+    "description": "Branch if Positive",
+    "bytes": 2,
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "(Indirect),Y",
+    "description": "Logical Inclusive OR",
+    "bytes": 2,
+    "opcode": 17,
+    "name": "ORA",
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "ZeroPage,X",
+    "opcode": 21,
+    "name": "ORA",
+    "description": "Logical Inclusive OR",
+    "bytes": 2,
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "description": "Arithmetic Shift Left",
+    "bytes": 2,
+    "name": "ASL",
+    "opcode": 22,
+    "mode": "ZeroPage,X",
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "Implied",
+    "opcode": 24,
+    "name": "CLC",
+    "bytes": 1,
+    "description": "Clear Carry Flag",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "Absolute,Y",
+    "description": "Logical Inclusive OR",
+    "bytes": 3,
+    "name": "ORA",
+    "opcode": 25,
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "Absolute,X",
+    "description": "Logical Inclusive OR",
+    "bytes": 3,
+    "name": "ORA",
+    "opcode": 29,
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "Absolute,X",
+    "description": "Arithmetic Shift Left",
+    "bytes": 3,
+    "name": "ASL",
+    "opcode": 30,
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "Absolute",
+    "name": "JSR",
+    "opcode": 32,
+    "description": "Jump to Subroutine",
+    "bytes": 3,
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "description": "Logical AND",
+    "bytes": 2,
+    "opcode": 33,
+    "name": "AND",
+    "mode": "(Indirect,X)",
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "opcode": 36,
+    "name": "BIT",
+    "bytes": 2,
+    "description": "Bit Test",
+    "mode": "ZeroPage",
+    "cycles": {
+      "count": 3,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "ZeroPage",
+    "name": "AND",
+    "opcode": 37,
+    "bytes": 2,
+    "description": "Logical AND",
+    "cycles": {
+      "count": 3,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "ZeroPage",
+    "description": "Rotate Left",
+    "bytes": 2,
+    "opcode": 38,
+    "name": "ROL",
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "description": "Pull Processor Status",
+    "bytes": 1,
+    "opcode": 40,
+    "name": "PLP",
+    "mode": "Implied",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "bytes": 2,
+    "description": "Logical AND",
+    "name": "AND",
+    "opcode": 41,
+    "mode": "Immediate",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "Accumulator",
+    "name": "ROL",
+    "opcode": 42,
+    "bytes": 1,
+    "description": "Rotate Left",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "Absolute",
+    "description": "Bit Test",
+    "bytes": 3,
+    "name": "BIT",
+    "opcode": 44,
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "Absolute",
+    "opcode": 45,
+    "name": "AND",
+    "description": "Logical AND",
+    "bytes": 3,
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "bytes": 3,
+    "description": "Rotate Left",
+    "name": "ROL",
+    "opcode": 46,
+    "mode": "Absolute",
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "Relative",
+    "description": "Branch if Minus",
+    "bytes": 2,
+    "name": "BMI",
+    "opcode": 48,
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "name": "AND",
+    "opcode": 49,
+    "description": "Logical AND",
+    "bytes": 2,
+    "mode": "(Indirect),Y",
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "bytes": 2,
+    "description": "Logical AND",
+    "name": "AND",
+    "opcode": 53,
+    "mode": "ZeroPage,X",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "bytes": 2,
+    "description": "Rotate Left",
+    "opcode": 54,
+    "name": "ROL",
+    "mode": "ZeroPage,X",
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "description": "Set Carry Flag",
+    "bytes": 1,
+    "name": "SEC",
+    "opcode": 56,
+    "mode": "Implied",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "Absolute,Y",
+    "bytes": 3,
+    "description": "Logical AND",
+    "opcode": 57,
+    "name": "AND",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "description": "Logical AND",
+    "bytes": 3,
+    "name": "AND",
+    "opcode": 61,
+    "mode": "Absolute,X",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "name": "ROL",
+    "opcode": 62,
+    "bytes": 3,
+    "description": "Rotate Left",
+    "mode": "Absolute,X",
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      0
+    ]
+  },
+  {
+    "mode": "Implied",
+    "bytes": 1,
+    "description": "Return from Interrupt",
+    "opcode": 64,
+    "name": "RTI",
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "(Indirect,X)",
+    "description": "Exclusive OR",
+    "bytes": 2,
+    "name": "EOR",
+    "opcode": 65,
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "opcode": 69,
+    "name": "EOR",
+    "bytes": 2,
+    "description": "Exclusive OR",
+    "mode": "ZeroPage",
+    "cycles": {
+      "count": 3,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "ZeroPage",
+    "name": "LSR",
+    "opcode": 70,
+    "description": "Logical Shift Right",
+    "bytes": 2,
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "opcode": 72,
+    "name": "PHA",
+    "bytes": 1,
+    "description": "Push Accumulator",
+    "mode": "Implied",
+    "cycles": {
+      "count": 3,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "opcode": 73,
+    "name": "EOR",
+    "description": "Exclusive OR",
+    "bytes": 2,
+    "mode": "Immediate",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "Accumulator",
+    "description": "Logical Shift Right",
+    "bytes": 1,
+    "opcode": 74,
+    "name": "LSR",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "Absolute",
+    "description": "Jump",
+    "bytes": 3,
+    "name": "JMP",
+    "opcode": 76,
+    "cycles": {
+      "count": 3,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "Absolute",
+    "name": "EOR",
+    "opcode": 77,
+    "bytes": 3,
+    "description": "Exclusive OR",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "Absolute",
+    "opcode": 78,
+    "name": "LSR",
+    "description": "Logical Shift Right",
+    "bytes": 3,
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      1,
+      0,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "Relative",
+    "description": "Branch if Overflow Clear",
+    "bytes": 2,
+    "opcode": 80,
+    "name": "BVC",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "(Indirect),Y",
+    "bytes": 2,
+    "description": "Exclusive OR",
+    "opcode": 81,
+    "name": "EOR",
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "ZeroPage,X",
+    "bytes": 2,
+    "description": "Exclusive OR",
+    "name": "EOR",
+    "opcode": 85,
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "ZeroPage,X",
+    "description": "Logical Shift Right",
+    "bytes": 2,
+    "name": "LSR",
+    "opcode": 86,
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "Implied",
+    "bytes": 1,
+    "description": "Clear Interrupt Disable",
+    "opcode": 88,
+    "name": "CLI",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "Absolute,Y",
+    "name": "EOR",
+    "opcode": 89,
+    "description": "Exclusive OR",
+    "bytes": 3,
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "description": "Exclusive OR",
+    "bytes": 3,
+    "name": "EOR",
+    "opcode": 93,
+    "mode": "Absolute,X",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "Absolute,X",
+    "name": "LSR",
+    "opcode": 94,
+    "description": "Logical Shift Right",
+    "bytes": 3,
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "Implied",
+    "name": "RTS",
+    "opcode": 96,
+    "description": "Return from Subroutine",
+    "bytes": 1,
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "(Indirect,X)",
+    "description": "Add with Carry",
+    "bytes": 2,
+    "opcode": 97,
+    "name": "ADC",
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "opcode": 101,
+    "name": "ADC",
+    "bytes": 2,
+    "description": "Add with Carry",
+    "mode": "ZeroPage",
+    "cycles": {
+      "count": 3,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "bytes": 2,
+    "description": "Rotate Right",
+    "opcode": 102,
+    "name": "ROR",
+    "mode": "ZeroPage",
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "Implied",
+    "bytes": 1,
+    "description": "Pull Accumulator",
+    "name": "PLA",
+    "opcode": 104,
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "bytes": 2,
+    "description": "Add with Carry",
+    "name": "ADC",
+    "opcode": 105,
+    "mode": "Immediate",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "name": "ROR",
+    "opcode": 106,
+    "description": "Rotate Right",
+    "bytes": 1,
+    "mode": "Accumulator",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "Indirect",
+    "opcode": 108,
+    "name": "JMP",
+    "description": "Jump",
+    "bytes": 3,
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "name": "ADC",
+    "opcode": 109,
+    "bytes": 3,
+    "description": "Add with Carry",
+    "mode": "Absolute",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "Absolute",
+    "bytes": 3,
+    "description": "Rotate Right",
+    "name": "ROR",
+    "opcode": 110,
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "Relative",
+    "description": "Branch if Overflow Set",
+    "bytes": 2,
+    "name": "BVS",
+    "opcode": 112,
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "(Indirect),Y",
+    "bytes": 2,
+    "description": "Add with Carry",
+    "name": "ADC",
+    "opcode": 113,
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "description": "Add with Carry",
+    "bytes": 2,
+    "opcode": 117,
+    "name": "ADC",
+    "mode": "ZeroPage,X",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "ZeroPage,X",
+    "opcode": 118,
+    "name": "ROR",
+    "bytes": 2,
+    "description": "Rotate Right",
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "Implied",
+    "opcode": 120,
+    "name": "SEI",
+    "bytes": 1,
+    "description": "Set Interrupt Disable",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "Absolute,Y",
+    "name": "ADC",
+    "opcode": 121,
+    "description": "Add with Carry",
+    "bytes": 3,
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "Absolute,X",
+    "name": "ADC",
+    "opcode": 125,
+    "bytes": 3,
+    "description": "Add with Carry",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "Absolute,X",
+    "description": "Rotate Right",
+    "bytes": 3,
+    "name": "ROR",
+    "opcode": 126,
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0
+    ]
+  },
+  {
+    "mode": "(Indirect,X)",
+    "description": "Store Accumulator",
+    "bytes": 2,
+    "name": "STA",
+    "opcode": 129,
+    "cycles": {
+      "count": 7,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "ZeroPage",
+    "name": "STY",
+    "opcode": 132,
+    "description": "Store Y Register",
+    "bytes": 2,
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "description": "Store Accumulator",
+    "bytes": 2,
+    "name": "STA",
+    "opcode": 133,
+    "mode": "ZeroPage",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "bytes": 2,
+    "description": "Store X Register",
+    "name": "STX",
+    "opcode": 134,
+    "mode": "ZeroPage",
+    "cycles": {
+      "count": 3,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "Implied",
+    "bytes": 1,
+    "description": "Decrement Y Register",
+    "opcode": 136,
+    "name": "DEY",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "Implied",
+    "bytes": 1,
+    "description": "Transfer X to Accumulator",
+    "opcode": 138,
+    "name": "TXA",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "bytes": 3,
+    "description": "Store Y Register",
+    "name": "STY",
+    "opcode": 140,
+    "mode": "Absolute",
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "Absolute",
+    "opcode": 141,
+    "name": "STA",
+    "description": "Store Accumulator",
+    "bytes": 3,
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "Absolute",
+    "name": "STX",
+    "opcode": 142,
+    "bytes": 3,
+    "description": "Store X Register",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      1,
+      0,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "Relative",
+    "bytes": 2,
+    "description": "Branch if Carry Clear",
+    "opcode": 144,
+    "name": "BCC",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "bytes": 2,
+    "description": "Store Accumulator",
+    "opcode": 145,
+    "name": "STA",
+    "mode": "(Indirect),Y",
+    "cycles": {
+      "count": 7,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "ZeroPage,X",
+    "name": "STY",
+    "opcode": 148,
+    "bytes": 2,
+    "description": "Store Y Register",
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "ZeroPage,X",
+    "bytes": 2,
+    "description": "Store Accumulator",
+    "name": "STA",
+    "opcode": 149,
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "ZeroPage,Y",
+    "name": "STX",
+    "opcode": 150,
+    "bytes": 2,
+    "description": "Store X Register",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "Implied",
+    "description": "Transfer Y to Accumulator",
+    "bytes": 1,
+    "name": "TYA",
+    "opcode": 152,
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "bytes": 3,
+    "description": "Store Accumulator",
+    "name": "STA",
+    "opcode": 153,
+    "mode": "Absolute,Y",
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "description": "Transfer X to Stack Pointer",
+    "bytes": 1,
+    "name": "TXS",
+    "opcode": 154,
+    "mode": "Implied",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "bytes": 3,
+    "description": "Store Accumulator",
+    "opcode": 157,
+    "name": "STA",
+    "mode": "Absolute,X",
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "Immediate",
+    "opcode": 160,
+    "name": "LDY",
+    "description": "Load Y Register",
+    "bytes": 2,
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "opcode": 161,
+    "name": "LDA",
+    "description": "Load Accumulator",
+    "bytes": 2,
+    "mode": "(Indirect,X)",
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "description": "Load X Register",
+    "bytes": 2,
+    "name": "LDX",
+    "opcode": 162,
+    "mode": "Immediate",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "name": "LDY",
+    "opcode": 164,
+    "bytes": 2,
+    "description": "Load Y Register",
+    "mode": "ZeroPage",
+    "cycles": {
+      "count": 3,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "ZeroPage",
+    "name": "LDA",
+    "opcode": 165,
+    "bytes": 2,
+    "description": "Load Accumulator",
+    "cycles": {
+      "count": 3,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "description": "Load X Register",
+    "bytes": 2,
+    "name": "LDX",
+    "opcode": 166,
+    "mode": "ZeroPage",
+    "cycles": {
+      "count": 3,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "Implied",
+    "description": "Transfer Accumulator to Y",
+    "bytes": 1,
+    "name": "TAY",
+    "opcode": 168,
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "description": "Load Accumulator",
+    "bytes": 2,
+    "name": "LDA",
+    "opcode": 169,
+    "mode": "Immediate",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "Implied",
+    "name": "TAX",
+    "opcode": 170,
+    "description": "Transfer Accumulator to X",
+    "bytes": 1,
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "name": "LDY",
+    "opcode": 172,
+    "description": "Load Y Register",
+    "bytes": 3,
+    "mode": "Absolute",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "name": "LDA",
+    "opcode": 173,
+    "bytes": 3,
+    "description": "Load Accumulator",
+    "mode": "Absolute",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "Absolute",
+    "opcode": 174,
+    "name": "LDX",
+    "bytes": 3,
+    "description": "Load X Register",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "Relative",
+    "bytes": 2,
+    "description": "Branch if Carry Set",
+    "name": "BCS",
+    "opcode": 176,
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "(Indirect),Y",
+    "name": "LDA",
+    "opcode": 177,
+    "description": "Load Accumulator",
+    "bytes": 2,
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "description": "Load Y Register",
+    "bytes": 2,
+    "name": "LDY",
+    "opcode": 180,
+    "mode": "ZeroPage,X",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "opcode": 181,
+    "name": "LDA",
+    "description": "Load Accumulator",
+    "bytes": 2,
+    "mode": "ZeroPage,X",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "description": "Load X Register",
+    "bytes": 2,
+    "name": "LDX",
+    "opcode": 182,
+    "mode": "ZeroPage,Y",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "Implied",
+    "description": "Clear Overflow Flag",
+    "bytes": 1,
+    "opcode": 184,
+    "name": "CLV",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "Absolute,Y",
+    "name": "LDA",
+    "opcode": 185,
+    "bytes": 3,
+    "description": "Load Accumulator",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "Implied",
+    "bytes": 1,
+    "description": "Transfer Stack Pointer to X",
+    "name": "TSX",
+    "opcode": 186,
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "bytes": 3,
+    "description": "Load Y Register",
+    "name": "LDY",
+    "opcode": 188,
+    "mode": "Absolute,X",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "Absolute,X",
+    "bytes": 3,
+    "description": "Load Accumulator",
+    "opcode": 189,
+    "name": "LDA",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "bytes": 3,
+    "description": "Load X Register",
+    "name": "LDX",
+    "opcode": 190,
+    "mode": "Absolute,Y",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1
+    ]
+  },
+  {
+    "mode": "Immediate",
+    "name": "CPY",
+    "opcode": 192,
+    "bytes": 2,
+    "description": "Compare Y Register",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "name": "CMP",
+    "opcode": 193,
+    "bytes": 2,
+    "description": "Compare",
+    "mode": "(Indirect,X)",
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "opcode": 196,
+    "name": "CPY",
+    "bytes": 2,
+    "description": "Compare Y Register",
+    "mode": "ZeroPage",
+    "cycles": {
+      "count": 3,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "mode": "ZeroPage",
+    "bytes": 2,
+    "description": "Compare",
+    "opcode": 197,
+    "name": "CMP",
+    "cycles": {
+      "count": 3,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "bytes": 2,
+    "description": "Decrement Memory",
+    "name": "DEC",
+    "opcode": 198,
+    "mode": "ZeroPage",
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      0,
+      0,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "description": "Increment Y Register",
+    "bytes": 1,
+    "name": "INY",
+    "opcode": 200,
+    "mode": "Implied",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "opcode": 201,
+    "name": "CMP",
+    "bytes": 2,
+    "description": "Compare",
+    "mode": "Immediate",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "description": "Decrement X Register",
+    "bytes": 1,
+    "name": "DEX",
+    "opcode": 202,
+    "mode": "Implied",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "bytes": 3,
+    "description": "Compare Y Register",
+    "name": "CPY",
+    "opcode": 204,
+    "mode": "Absolute",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "mode": "Absolute",
+    "opcode": 205,
+    "name": "CMP",
+    "bytes": 3,
+    "description": "Compare",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "bytes": 3,
+    "description": "Decrement Memory",
+    "name": "DEC",
+    "opcode": 206,
+    "mode": "Absolute",
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "opcode": 208,
+    "name": "BNE",
+    "description": "Branch if Not Equal",
+    "bytes": 2,
+    "mode": "Relative",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "name": "CMP",
+    "opcode": 209,
+    "bytes": 2,
+    "description": "Compare",
+    "mode": "(Indirect),Y",
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "opcode": 213,
+    "name": "CMP",
+    "bytes": 2,
+    "description": "Compare",
+    "mode": "ZeroPage,X",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "opcode": 214,
+    "name": "DEC",
+    "description": "Decrement Memory",
+    "bytes": 2,
+    "mode": "ZeroPage,X",
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "bytes": 1,
+    "description": "Clear Decimal Mode",
+    "name": "CLD",
+    "opcode": 216,
+    "mode": "Implied",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "opcode": 217,
+    "name": "CMP",
+    "bytes": 3,
+    "description": "Compare",
+    "mode": "Absolute,Y",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "name": "CMP",
+    "opcode": 221,
+    "bytes": 3,
+    "description": "Compare",
+    "mode": "Absolute,X",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "name": "DEC",
+    "opcode": 222,
+    "description": "Decrement Memory",
+    "bytes": 3,
+    "mode": "Absolute,X",
+    "cycles": {
+      "count": 7,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1
+    ]
+  },
+  {
+    "mode": "Immediate",
+    "name": "CPX",
+    "opcode": 224,
+    "description": "Compare X Register",
+    "bytes": 2,
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "mode": "(Indirect,X)",
+    "opcode": 225,
+    "name": "SBC",
+    "description": "Subtract with Carry",
+    "bytes": 2,
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "mode": "ZeroPage",
+    "bytes": 2,
+    "description": "Compare X Register",
+    "opcode": 228,
+    "name": "CPX",
+    "cycles": {
+      "count": 3,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "name": "SBC",
+    "opcode": 229,
+    "bytes": 2,
+    "description": "Subtract with Carry",
+    "mode": "ZeroPage",
+    "cycles": {
+      "count": 3,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "bytes": 2,
+    "description": "Increment Memory",
+    "name": "INC",
+    "opcode": 230,
+    "mode": "ZeroPage",
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      0,
+      0,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "mode": "Implied",
+    "opcode": 232,
+    "name": "INX",
+    "description": "Increment X Register",
+    "bytes": 1,
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "bytes": 2,
+    "description": "Subtract with Carry",
+    "opcode": 233,
+    "name": "SBC",
+    "mode": "Immediate",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "mode": "Implied",
+    "description": "No Operation",
+    "bytes": 1,
+    "opcode": 234,
+    "name": "NOP",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "mode": "Absolute",
+    "description": "Compare X Register",
+    "bytes": 3,
+    "name": "CPX",
+    "opcode": 236,
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "name": "SBC",
+    "opcode": 237,
+    "description": "Subtract with Carry",
+    "bytes": 3,
+    "mode": "Absolute",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "mode": "Absolute",
+    "bytes": 3,
+    "description": "Increment Memory",
+    "opcode": 238,
+    "name": "INC",
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "bytes": 2,
+    "description": "Branch if Equal",
+    "name": "BEQ",
+    "opcode": 240,
+    "mode": "Relative",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "bytes": 2,
+    "description": "Subtract with Carry",
+    "name": "SBC",
+    "opcode": 241,
+    "mode": "(Indirect),Y",
+    "cycles": {
+      "count": 5,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "description": "Subtract with Carry",
+    "bytes": 2,
+    "name": "SBC",
+    "opcode": 245,
+    "mode": "ZeroPage,X",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "opcode": 246,
+    "name": "INC",
+    "description": "Increment Memory",
+    "bytes": 2,
+    "mode": "ZeroPage,X",
+    "cycles": {
+      "count": 6,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      0,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "name": "SED",
+    "opcode": 248,
+    "description": "Set Decimal Flag",
+    "bytes": 1,
+    "mode": "Implied",
+    "cycles": {
+      "count": 2,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "mode": "Absolute,Y",
+    "opcode": 249,
+    "name": "SBC",
+    "bytes": 3,
+    "description": "Subtract with Carry",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "opcode": 253,
+    "name": "SBC",
+    "description": "Subtract with Carry",
+    "bytes": 3,
+    "mode": "Absolute,X",
+    "cycles": {
+      "count": 4,
+      "add_on_pagecross": true
+    },
+    "opcode_binary": [
+      1,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  },
+  {
+    "opcode": 254,
+    "name": "INC",
+    "bytes": 3,
+    "description": "Increment Memory",
+    "mode": "Absolute,X",
+    "cycles": {
+      "count": 7,
+      "add_on_pagecross": false
+    },
+    "opcode_binary": [
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ]
+  }
+]
