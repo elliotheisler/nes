@@ -31,45 +31,41 @@ void Cpu::clock() {
 void Cpu::exec() {
     using enum PageWrap;
     // https://llx.com/Neil/a2/opcodes.html
-    r16 effective_addr   = 0x0000;
-    const uint8_t opcode = load8( PC );
-    const int cycles     = get_cycles( opcode );
-    const int num_bytes  = get_num_bytes( opcode );
-    const AddrMode mode  = get_mode( opcode );
+    const uint8_t opcode              = load8( PC );
+    const int cycles                  = get_cycles( opcode );
+    const int num_bytes               = get_num_bytes( opcode );
+    const AddrMode mode               = get_mode( opcode );
+    std::optional<r16> effective_addr = get_effective_addr( mode );
     // 2 JMP instructions
     if ( opcode & 0b01001100 ) {
-        effective_addr = load16( PC + 1, kNoPageWrap );
-        if ( opcode == 0b01101100 ) {  // indirect absolute
-            effective_addr = load16( effective_addr, kDoPageWrap );
-        }
-        PC = effective_addr;
+        PC = effective_addr.value();
         return;
     }
 
     // loads and stores
-    // uint8_t* reg_arg;
-    // effective_addr = get_effective_addr(mode);
-    // switch (opcode & 0b00000011) {
-    //     case 0b00:
-    //         reg_arg = &Y;
-    //         break;
-    //     case 0b01:
-    //         reg_arg = &X;
-    //         break;
-    //     case 0b10:
-    //         reg_arg = &A;
-    //         break;
-    //     default:
-    //         throw std::logic_error("unofficial opcode: cc == 11");
-    // }
-    // // stores: have 8th bit set
-    // if ((opcode >> 5) == 0b100) {
-    //     store8(effective_addr.value(), *reg_arg);
-    // }
-    // // loads: have 8th and 6th bits set
-    // else if ((opcode >> 5) == 0b101) {
-    //     *reg_arg = load8(effective_addr.value());
-    // }
+    uint8_t* reg_arg;
+    switch ( opcode & 0b00000011 ) {
+        case 0b00:
+            reg_arg = &Y;
+            break;
+        case 0b01:
+            reg_arg = &X;
+            break;
+        case 0b10:
+            reg_arg = &A;
+            break;
+        default:
+            throw std::logic_error( "unofficial opcode: cc == 11" );
+    }
+    // stores: have 8th bit set
+    if ( ( opcode >> 5 ) == 0b100 ) {
+        std::cout << "yes\n";
+        store8( effective_addr.value(), *reg_arg );
+    }
+    // loads: have 8th and 6th bits set
+    else if ( ( opcode >> 5 ) == 0b101 ) {
+        *reg_arg = load8( effective_addr.value() );
+    }
     // all other instructions TODO
     PC = PC + num_bytes;
 }
@@ -95,7 +91,7 @@ std::string Cpu::to_assembly( const uint8_t opcode ) {
     return i_record.name;
 }
 
-std::optional<r16> Cpu::get_effective_addr( AddrMode m ) {
+r16 Cpu::get_effective_addr( AddrMode m ) {
     using enum PageWrap;
     r16 addr;
     switch ( m ) {
@@ -124,7 +120,7 @@ std::optional<r16> Cpu::get_effective_addr( AddrMode m ) {
             break;
 
         case mIndirect:
-            addr = load8( PC + 1 );
+            addr = load16( PC + 1, kDoPageWrap );
             addr = load16( addr, kDoPageWrap );
         case mIndirectX:
             addr        = load8( PC + 1 );
@@ -146,7 +142,7 @@ std::optional<r16> Cpu::get_effective_addr( AddrMode m ) {
             break;
         case mAccumulator:
         case mImplied:
-            return std::nullopt;
+            return 0;  // TODO
     }
     return addr;
 }
@@ -255,6 +251,14 @@ uint8_t Cpu::addr_access( uint16_t addr, uint8_t payload ) {
     return 0;
 }
 
+// flags
+bool Cpu::get_flag( CpuFlag flag ) { return SR & static_cast<uint8_t>( flag ); }
+
+void Cpu::set_flag( CpuFlag flag, bool val ) {
+    uint8_t mask  = static_cast<uint8_t>( flag );
+    SR           &= val ? mask : ~mask;
+}
+
 // =================logging
 #include <format>
 
@@ -277,10 +281,10 @@ void Cpu::log_nintendulator() {
             : std::vformat( "{:02X}", std::make_format_args( arg2 ) ) };
 
     fprintf( stdout,
-             "%02X%02X  %02X %2s %2s  %-32sA:%02X X:%02X Y:%02X P:%02X SP:%02X "
-             //"PPU:%4s"
+             "%02X%02X  %02X %2s %2s  %-32sA:%02X X:%02X Y:%02X P:%02X SP:%02X"
+             "%s"  // PPU fields placeholder
              "CYC:%d\n",
              PC.page, PC.index, opcode, arg1str.c_str(), arg2str.c_str(),
-             cur_inst.to_string().c_str(), A, X, Y, SR, SP,  // "        ",
+             cur_inst.to_string().c_str(), A, X, Y, SR, SP, "             ",
              cycles_elapsed );
 }

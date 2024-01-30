@@ -23,6 +23,9 @@ class Cpu {
         fOverflow    = 1 << 6,
         fNegative    = 1 << 7,
     };
+    // flag functions
+    bool get_flag( CpuFlag flag );
+    void set_flag( CpuFlag flag, bool val );
     explicit Cpu( Cartridge &p_cartridge );
     explicit Cpu( uint8_t m_A, uint8_t m_Y, uint8_t m_X, uint8_t m_SP,
                   uint8_t m_SR, uint16_t m_PC );
@@ -52,7 +55,7 @@ class Cpu {
     AddrMode get_mode( uint8_t opcode );
     uint8_t get_affected_flags( uint8_t opcode );
     // load/store
-    std::optional<r16> get_effective_addr( AddrMode m );
+    r16 get_effective_addr( AddrMode m );
     enum class PageWrap { kDoPageWrap, kNoPageWrap };
 
     r16 load16( r16 addr, PageWrap pw );
@@ -61,10 +64,6 @@ class Cpu {
 
     template <AccessType A>
     uint8_t addr_access( uint16_t addr, uint8_t payload = 0 );
-
-    // flag functions
-    bool get_flag( CpuFlag flag );
-    void set_flag( CpuFlag flag, bool val );
 
     int cycles_elapsed{ 0 };
     // logging
