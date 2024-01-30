@@ -31,14 +31,23 @@ void Cpu::clock() {
 void Cpu::exec() {
     using enum PageWrap;
     // https://llx.com/Neil/a2/opcodes.html
-    const uint8_t opcode              = load8( PC );
-    const int cycles                  = get_cycles( opcode );
-    const int num_bytes               = get_num_bytes( opcode );
-    const AddrMode mode               = get_mode( opcode );
-    std::optional<r16> effective_addr = get_effective_addr( mode );
+    const uint8_t  opcode         = load8( PC );
+    const int      cycles         = get_cycles( opcode );
+    int            num_bytes      = get_num_bytes( opcode );
+    const AddrMode mode           = get_mode( opcode );
+    r16            effective_addr = get_effective_addr( mode );
+
     // 2 JMP absolute and indirect
     if ( opcode == 0b01001100 | opcode == 0b01101100 ) {
-        PC = effective_addr.value();
+        PC = effective_addr;
+        return;
+    }
+    // JSR
+    else if ( opcode == 0x20 ) {
+        effective_addr = load16( PC + 1, kNoPageWrap );
+        push( PC.page );
+        push( PC.index );
+        PC = effective_addr;
         return;
     }
 
@@ -59,11 +68,11 @@ void Cpu::exec() {
     }
     // stores: have 8th bit set
     if ( ( opcode >> 5 ) == 0b100 ) {
-        store8( effective_addr.value(), *reg_arg );
+        store8( effective_addr, *reg_arg );
     }
     // loads: have 8th and 6th bits set
     else if ( ( opcode >> 5 ) == 0b101 ) {
-        *reg_arg = load8( effective_addr.value() );
+        *reg_arg = load8( effective_addr );
     }
     // all other instructions TODO
     PC = PC + num_bytes;
@@ -220,6 +229,17 @@ void Cpu::store8( uint16_t addr, uint8_t payload ) {
     addr_access<kStore>( addr, payload );
 }
 
+// push/pop
+void Cpu::push( uint8_t payload ) {
+    store8( 0x0100 | SP, payload );
+    SP--;
+}
+
+uint8_t Cpu::pop() {
+    SP++;
+    return load8( 0x0100 | SP );
+}
+
 template <AccessType A>
 uint8_t Cpu::addr_access( uint16_t addr, uint8_t payload ) {
     // https://www.nesdev.org/wiki/CPU_memory_map
@@ -263,10 +283,10 @@ void Cpu::set_flag( CpuFlag flag, bool val ) {
 
 void Cpu::log_nintendulator() {
     using namespace Disassemble;
-    const uint8_t opcode = load8( PC );
-    const uint8_t arg1   = load8( PC + 1 );
-    const uint8_t arg2   = load8( PC + 2 );
-    const ParsedInst cur_inst{ PC, opcode, arg1, arg2 };
+    const uint8_t     opcode = load8( PC );
+    const uint8_t     arg1   = load8( PC + 1 );
+    const uint8_t     arg2   = load8( PC + 2 );
+    const ParsedInst  cur_inst{ PC, opcode, arg1, arg2 };
     const InstRecord& record = cur_inst.record;
 
     const std::string arg1str{

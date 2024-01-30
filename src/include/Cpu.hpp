@@ -38,7 +38,7 @@ class Cpu {
     void clock();
 
     uint8_t A, Y, X, SP, SR;
-    r16 PC;
+    r16     PC;
 
    private:
     Cartridge &cartridge;
@@ -49,18 +49,20 @@ class Cpu {
     int counter{ 0 };
 
     // execute current instruction
-    void exec();
-    int get_cycles( uint8_t opcode );
-    int get_num_bytes( uint8_t opcode );
+    void     exec();
+    int      get_cycles( uint8_t opcode );
+    int      get_num_bytes( uint8_t opcode );
     AddrMode get_mode( uint8_t opcode );
-    uint8_t get_affected_flags( uint8_t opcode );
+    uint8_t  get_affected_flags( uint8_t opcode );
     // load/store
-    r16 get_effective_addr( AddrMode m );
     enum class PageWrap { kDoPageWrap, kNoPageWrap };
-
-    r16 load16( r16 addr, PageWrap pw );
+    r16     get_effective_addr( AddrMode m );
+    r16     load16( r16 addr, PageWrap pw );
     uint8_t load8( uint16_t addr );
-    void store8( uint16_t addr, uint8_t payload );  // TODO: pagewrap?
+    void    store8( uint16_t addr, uint8_t payload );  // TODO: pagewrap?
+    // push/pop
+    void    push( uint8_t payload );
+    uint8_t pop();
 
     template <AccessType A>
     uint8_t addr_access( uint16_t addr, uint8_t payload = 0 );
@@ -68,5 +70,5 @@ class Cpu {
     int cycles_elapsed{ 0 };
     // logging
     std::string to_assembly( const uint8_t opcode );
-    void log_nintendulator();
+    void        log_nintendulator();
 };
