@@ -40,36 +40,38 @@ void Cpu::exec() {
     r16            effective_addr = get_effective_addr( mode );
 
     // need a default value since this is a reference i guess
-    uint8_t& arg1 = A;
+    uint8_t  arg1;
     uint8_t  arg2;
     uint8_t  res;
+    uint8_t& dest = A;
     switch ( opcode & 0b11 ) {
         case 01:
+            dest = A;
             arg1 = A;
             arg2 = load8( effective_addr );
             switch ( opcode >> 5 ) {
                 case 0b000:  // ORA
-                    res = arg1 |= arg2;
+                    dest = res = arg1 | arg2;
                     break;
                 case 0b001:  // AND
-                    res = arg1 &= arg2;
+                    dest = res = arg1 & arg2;
                     break;
                 case 0b010:  // EOR
-                    res = arg1 ^= arg2;
+                    dest = res = arg1 ^ arg2;
                     break;
                 case 0b011:  // ADC
-                    res = arg1 += arg2 + get_flag( fCarry );
+                    dest = res = arg1 + arg2 + get_flag( fCarry );
                     break;
                     // case 0b100: // STA
                     //   store8(effective_addr, arg1); break;
                     //                 case 0b101:  // LDA
-                    //                     res = arg1 = arg2;
+                    //                     dest = res = arg1 = arg2;
                     //                     break;
                 case 0b110:  // CMP
                     res = arg1 - arg2;
                     break;
                 case 0b111:  // SBC
-                    res = arg1 -= arg2 + !get_flag( fCarry );
+                    dest = res = arg1 + ~arg2 + get_flag( fCarry );
                     break;
             }
             // all cc == 01 (except stores) affect N and Z the same:
@@ -82,15 +84,16 @@ void Cpu::exec() {
                 case 0b111:  // SBC
                     set_flag( fCarry, res < arg1 );
                     // ADC and SBC: V flag
-                    // logic: "overflowing" beyond bounds of -128 and 127 is
-                    // only possible if arg1 and arg2 have the same sign
-                    // for addition
+                    // logic: for signed addition, "overflowing" beyond bounds
+                    // of -128 and 127 is only possible if arg1 and arg2 have
+                    // the same sign and the result has the opposite sign for
+                    // subtraction, arg1 and arg2 must have different signs
                     if ( opcode >> 5 == 0b011 ) {
-                        set_flag( fOverflow, 0x80 & ~( ( arg1 ^ arg2 ) |
-                                                       ~( arg1 ^ res ) ) );
+                        set_flag( fOverflow,
+                                  0x80 & ~( arg1 ^ arg2 ) & ( arg1 ^ res ) );
                     } else if ( opcode >> 5 == 0b111 ) {
-                        set_flag( fOverflow, 0x80 & ~( ( arg1 ^ arg2 ) |
-                                                       ~( arg1 ^ res ) ) );
+                        set_flag( fOverflow,
+                                  0x80 & ( arg1 ^ arg2 ) & ( arg1 ^ res ) );
                     }
             }
             break;
