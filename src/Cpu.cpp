@@ -21,20 +21,24 @@ Cpu::Cpu( Cartridge& p_cartridge )
     : cartridge{ p_cartridge }, A{ 0 }, X{ 0 }, Y{ 0 } {};
 
 void Cpu::clock() {
-    counter++;
-    cycles_elapsed++;
-    if ( get_cycles( load8( PC ) ) == counter ) {
-        exec();
+    // do exec() on first cycle ...
+    if ( counter == 0 ) {
+        last_cycles = exec();
+    }
+    counter = (counter + 1) % last_cycles;
+    // ... and act like it actually completed after <last_cycles> cycles
+    if ( counter == 0 ) {
+        cycles_elapsed += last_cycles;
         log_nintendulator();
-        counter = 0;
     }
 }
 
-void Cpu::exec() {
+// TODO: account for page cross extra cycle in all instructions
+int Cpu::exec() {
     using enum PageWrap;
     // https://llx.com/Neil/a2/opcodes.html
     const uint8_t  opcode         = load8( PC );
-    const int      cycles         = get_cycles( opcode );
+    int            cycles         = get_cycles( opcode );
     int            num_bytes      = get_num_bytes( opcode );
     const AddrMode mode           = get_mode( opcode );
     r16            effective_addr = get_effective_addr( mode );
@@ -42,10 +46,34 @@ void Cpu::exec() {
     // need a default value since this is a reference i guess
     uint8_t  arg1;
     uint8_t  arg2;
-    uint8_t  res;
     uint8_t& dest = A;
+    uint8_t  res;
+    r16      ret_addr;
+    // ***some instructions that don't really belong anywhere
+    switch ( opcode ) {
+            // -- JMP-like instructions
+            // 2 JMP absolute and indirect
+        case 0x4C:
+        case 0x6C:
+            PC = effective_addr;
+            return cycles;
+            // BIT insts
+        case 0x24:
+        case 0x2C:
+            arg1 = A;
+            res  = arg1 & load8( effective_addr );
+            set_flag( fOverflow, res & fOverflow );
+            set_flag( fNegative, res & 0x80 );
+            set_flag( fZero, !res );
+            goto INC_PC;
+        case 0xEA: // NOP
+            goto INC_PC;
+    }
+
+
+    // ***main lookup table
     switch ( opcode & 0b11 ) {
-        case 01:
+        case 01: // aaabbb01
             dest = A;
             arg1 = A;
             arg2 = load8( effective_addr );
@@ -97,7 +125,7 @@ void Cpu::exec() {
                     }
             }
             break;
-        case 0b10:
+        case 0b10: // aaabbb10
             arg1 = load8( effective_addr );
             switch ( opcode >> 5 ) {
                 case 0b000:  // ASL
@@ -145,59 +173,191 @@ void Cpu::exec() {
                     break;
             }
             break;
+        case 0b00:                              // aabbb00
+            switch ( opcode >> 3 & 0b00011 ) {  // aaa**b00
+                case 0b11:                      // flag setters/getters
+                    switch ( opcode >> 5 ) {
+                        case 000:
+                            set_flag( fCarry, false );
+                            break;
+                        case 001:
+                            set_flag( fCarry, true );
+                            break;
+                        case 010:
+                            set_flag( fInterruptDisable, false );
+                            break;
+                        case 011:
+                            set_flag( fInterruptDisable, true );
+                            break;
+                        case 100:  // TYA
+                            arg1 = Y;
+                            dest = A;
+                            res = dest = arg1;
+                            break;
+                        case 101:
+                            set_flag( fOverflow, false );
+                            break;
+                        case 110:
+                            set_flag( fDecimal, false );
+                            break;
+                        case 111:
+                            set_flag( fDecimal, true );
+                            break;
+                    }
+                    goto NO_LDST_00;
+                case 0b10:  // branches
+                    switch ( opcode >> 5 & 0b11) {
+                        case 00:
+                            if ( ( ( opcode >> 5 ) & 0b001 ) ==
+                                 get_flag( fNegative ) ) {
+                                PC = effective_addr;
+                                return cycles + 1;
+                            }
+                            break;
+                        case 01:
+                            if ( ( ( opcode >> 5 ) & 0b001 ) ==
+                                 get_flag( fOverflow ) ) {
+                                PC = effective_addr;
+                                return cycles + 1;
+                            }
+                            break;
+                        case 10:
+                            if ( ( ( opcode >> 5 ) & 0b001 ) ==
+                                 get_flag( fCarry ) ) {
+                                PC = effective_addr;
+                                return cycles + 1;
+                            }
+                            break;
+                        case 11:
+                            if ( ( ( opcode >> 5 ) & 0b001 ) ==
+                                 get_flag( fZero ) ) {
+                                PC = effective_addr;
+                                return cycles + 1;
+                            }
+                            break;
+                    }
+                    goto NO_LDST_00;
+                case 0b00:
+                    if ( !( opcode & 0x80 ) ) {  //  BRK, JSR, RTI, RTS
+                        switch ( opcode ) {
+                            // BRK
+                            case 0x00:
+                                interrupt<iBRK>();
+                                return cycles;
+                            // JSR
+                            case 0x20:
+                                ret_addr  = PC;
+                                ret_addr += 2;
+                                push( ret_addr.page );
+                                push( ret_addr.index );
+                                effective_addr = load16( PC + 1, kNoPageWrap );
+                                PC             = effective_addr;
+                                return cycles;
+                            // -- RTS-like instructions
+                            // RTI
+                            case 0x40:
+                                P                    = pop();
+                                effective_addr.index = pop();
+                                effective_addr.page  = pop();
+                                PC                   = effective_addr;
+                                return cycles;
+                            // RTS
+                            case 0x60:
+                                effective_addr.index = pop();
+                                effective_addr.page  = pop();
+                                effective_addr++;
+                                PC = effective_addr;
+                                return cycles;
+                        }
+                    }
+                    break;
+                case 0b01:
+                    if ( !( opcode & 0x80 ) ) {  // PHP/PLP, PHA/PLA
+                        switch ( opcode >> 5 ) {
+                            case 0b00:
+                                push( P );
+                                break;
+                            case 0b01:
+                                P = pop();
+                                break;
+                            case 0b10:
+                                push( A );
+                                break;
+                            case 0b11:
+                                res = A = pop();
+                                set_flag( fNegative, res & 0x80 );
+                                set_flag( fZero, !res );
+                                break;
+                        }
+                    } else {  // DEY, TAY, INY, INX
+                        switch ( opcode >> 5 ) {
+                            case 0b00:
+                                res = Y = Y - 1;
+                                break;
+                            case 0b01:
+                                res = Y = A;
+                                break;
+                            case 0b10:
+                                res = Y = Y + 1;
+                                break;
+                            case 0b11:
+                                res = X = X + 1;
+                                break;
+                        }
+                        set_flag( fNegative, res & 0x80 );
+                        set_flag( fZero, !res );
+                    }
+                    goto NO_LDST_00;
+            }
+            // LD/ST
+            switch (opcode >> 5) {
+              case 0b100:
+              case 0b101:
+                goto LOAD_STORE;
+            }
+NO_LDST_00:
+            // CPY, CPX, INY, INX: 11a0bb00
+            if ( !( opcode & 0b00010000 ) ) {
+                switch ( opcode >> 5 ) {
+                    case 0b110:
+                        arg1 = dest = Y;
+                        break;
+                    case 0b111:
+                        arg1 = dest = X;
+                        break;
+                }
+                switch ( opcode >> 2 & 0b11 ) {  // 11a01100
+                        //                 case 0b10: // IN(Y|X) **already
+                        //                 handled above!
+                        //                   res = dest = arg1 + 1; break;
+                    case 0b00:  // CP(Y|X)
+                    case 0b01:
+                    case 0b11:
+                        arg2 = load8( effective_addr );
+                        res  = arg1 - arg2;
+                        break;
+                }
+                set_flag( fNegative, res & 0x80 );
+                set_flag( fZero, !res );
+                set_flag( fCarry, res < arg1 );
+            }
+            goto INC_PC;
+        default:
+//             throw std::logic_error( "unofficial opcode: cc == 11" );
     }
 
-    r16 ret_addr;
-    switch ( opcode ) {
-            // -- JMP-like instructions
-            // 2 JMP absolute and indirect
-        case 0x4C:
-        case 0x6C:
-            PC = effective_addr;
-            return;
-            // BRK
-        case 0x00:
-            interrupt<iBRK>();
-            return;
-        // JSR
-        case 0x20:
-            ret_addr  = PC;
-            ret_addr += 2;
-            push( ret_addr.page );
-            push( ret_addr.index );
-            effective_addr = load16( PC + 1, kNoPageWrap );
-            PC             = effective_addr;
-            return;
-        // -- RTS-like instructions
-        // RTI
-        case 0x40:
-            P                    = pop();
-            effective_addr.index = pop();
-            effective_addr.page  = pop();
-            PC                   = effective_addr;
-            return;
-        // RTS
-        case 0x60:
-            effective_addr.index = pop();
-            effective_addr.page  = pop();
-            effective_addr++;
-            PC = effective_addr;
-            return;
-    }
-
-    // loads and stores
+    // ***loads and stores
+LOAD_STORE:
     switch ( opcode & 0b00000011 ) {
         case 0b00:
-            arg1 = Y;
+            arg1 = dest = Y;
             break;
         case 0b01:
-            arg1 = A;
+            arg1 = dest = A;
             break;
         case 0b10:
-            arg1 = X;
+            arg1 = dest = X;
             break;
-        default:
-            throw std::logic_error( "unofficial opcode: cc == 11" );
     }
 
     // stores: have 8th bit set
@@ -206,11 +366,17 @@ void Cpu::exec() {
     }
     // loads: have 8th and 6th bits set
     else if ( ( opcode >> 5 ) == 0b101 ) {
-        res = arg1 = load8( effective_addr );
+        res = dest = load8( effective_addr );
         set_flag( fNegative, res & 0x80 );
         set_flag( fZero, !res );
     }
+
+
+
+
+INC_PC:
     PC = PC + num_bytes;
+    return cycles;
 }
 
 AddrMode Cpu::get_mode( uint8_t opcode ) {
@@ -280,8 +446,8 @@ r16 Cpu::get_effective_addr( AddrMode m ) {
             addr = PC + 1;
             break;
         case mRelative:
-            addr        = PC;
-            addr.index += load8( PC + 1 );
+            addr  = PC;
+            addr += static_cast<int>( load8( PC +1) );
             break;
         case mAccumulator:
         case mImplied:

@@ -54,10 +54,9 @@ class Cpu {
     // TODO: Apu apu
     uint8_t RAM[1 << 11];
 
-    int counter{ 0 };
 
     // execute current instruction
-    void     exec();
+    int     exec(); // returns number of cycles taken
     int      get_cycles( uint8_t opcode );
     int      get_num_bytes( uint8_t opcode );
     AddrMode get_mode( uint8_t opcode );
@@ -75,8 +74,11 @@ class Cpu {
     template <AccessType A>
     uint8_t addr_access( uint16_t addr, uint8_t payload = 0 );
 
-    int cycles_elapsed{ 0 };
     // logging
     std::string to_assembly( const uint8_t opcode );
     void        log_nintendulator();
+    // state for clock() and logging
+    int counter{ 0 };
+    int cycles_elapsed{ 0 };
+    int last_cycles{ 0 };
 };
