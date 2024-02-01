@@ -27,7 +27,8 @@ class Cpu {
     // flag functions
     bool get_flag( CpuFlag flag );
     void set_flag( CpuFlag flag, bool val );
-    explicit Cpu( Cartridge &p_cartridge );
+    // constructors
+    explicit Cpu( Cartridge& p_cartridge );
     explicit Cpu( uint8_t m_A, uint8_t m_Y, uint8_t m_X, uint8_t m_SP,
                   uint8_t m_SR, uint16_t m_PC );
 
@@ -48,7 +49,7 @@ class Cpu {
     template <IntType I>
     void interrupt();
 
-    Cartridge &cartridge;
+    Cartridge& cartridge;
     // only the cpu communicates with the APU and the NES's 2kb of RAM
     // TODO: Apu apu
     uint8_t RAM[1 << 11];

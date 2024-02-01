@@ -1,5 +1,7 @@
 #include "Cpu.hpp"
 
+#include <bits/ranges_algo.h>
+
 #include <cstdint>
 #include <cstdio>
 #include <iostream>
@@ -37,6 +39,112 @@ void Cpu::exec() {
     const AddrMode mode           = get_mode( opcode );
     r16            effective_addr = get_effective_addr( mode );
 
+    // need a default value since this is a reference i guess
+    uint8_t& arg1 = A;
+    uint8_t  arg2;
+    uint8_t  res;
+    switch ( opcode & 0b11 ) {
+        case 01:
+            arg1 = A;
+            arg2 = load8( effective_addr );
+            switch ( opcode >> 5 ) {
+                case 0b000:  // ORA
+                    res = arg1 |= arg2;
+                    break;
+                case 0b001:  // AND
+                    res = arg1 &= arg2;
+                    break;
+                case 0b010:  // EOR
+                    res = arg1 ^= arg2;
+                    break;
+                case 0b011:  // ADC
+                    res = arg1 += arg2 + get_flag( fCarry );
+                    break;
+                    // case 0b100: // STA
+                    //   store8(effective_addr, arg1); break;
+                    //                 case 0b101:  // LDA
+                    //                     res = arg1 = arg2;
+                    //                     break;
+                case 0b110:  // CMP
+                    res = arg1 - arg2;
+                    break;
+                case 0b111:  // SBC
+                    res = arg1 -= arg2 + !get_flag( fCarry );
+                    break;
+            }
+            // all cc == 01 (except stores) affect N and Z the same:
+            set_flag( fNegative, res & 0x80 );
+            set_flag( fZero, !res );
+            // ADC, SBC, and CMP: C flag
+            switch ( opcode >> 5 ) {
+                case 0b011:  // ADC
+                case 0b110:  // CMP
+                case 0b111:  // SBC
+                    set_flag( fCarry, res < arg1 );
+                    // ADC and SBC: V flag
+                    // logic: "overflowing" beyond bounds of -128 and 127 is
+                    // only possible if arg1 and arg2 have the same sign
+                    // for addition
+                    if ( opcode >> 5 == 0b011 ) {
+                        set_flag( fOverflow, 0x80 & ~( ( arg1 ^ arg2 ) |
+                                                       ~( arg1 ^ res ) ) );
+                    } else if ( opcode >> 5 == 0b111 ) {
+                        set_flag( fOverflow, 0x80 & ~( ( arg1 ^ arg2 ) |
+                                                       ~( arg1 ^ res ) ) );
+                    }
+            }
+            break;
+        case 0b10:
+            arg1 = load8( effective_addr );
+            switch ( opcode >> 5 ) {
+                case 0b000:  // ASL
+                    res = arg1 << 1;
+                    store8( effective_addr, res );
+                    break;
+                case 0b001:  // ROL
+                    res = arg1 << 1 | arg1 >> 7;
+                    store8( effective_addr, res );
+                    break;
+                case 0b010:  // LSR
+                    res = arg1 >> 1;
+                    store8( effective_addr, res );
+                    break;
+                case 0b011:  // ROR
+                    res = arg1 >> 1 | arg1 << 7;
+                    store8( effective_addr, res );
+                    break;
+                    // case 0b100: // STX ( or TXA )
+                    //               case 0b101: // LDX ( or TAX )
+                    //                 res = arg1;
+                case 0b110:  // DEC ( or DEX )
+                    res = arg1 - 1;
+                    store8( effective_addr, res );
+                    break;
+                case 0b111:  // INC
+                    res = arg1 + 1;
+                    store8( effective_addr, res );
+                    break;
+            }
+            // all cc == 10 (except stores, and transfers) affect N and Z the
+            // same:
+            set_flag( fNegative, res & 0x80 );
+            set_flag( fZero, !res );
+            // shift instructions set the C flag to the leftmost/rightmost bit,
+            // i.e the one shifted "out"
+            switch ( opcode >> 5 ) {
+                case 0b000:  // ASL
+                case 0b001:  // ROL
+                    set_flag( fCarry, arg1 & 0x80 );
+                    break;
+                case 0b010:  // LSR
+                case 0b011:  // ROR
+                    set_flag( fCarry, arg1 & 0x01 );
+                    break;
+            }
+            break;
+    }
+
+    r16 ret_addr;
     switch ( opcode ) {
             // -- JMP-like instructions
             // 2 JMP absolute and indirect
@@ -50,8 +158,8 @@ void Cpu::exec() {
             return;
         // JSR
         case 0x20:
-            r16 ret_addr  = PC;
-            ret_addr     += 2;
+            ret_addr  = PC;
+            ret_addr += 2;
             push( ret_addr.page );
             push( ret_addr.index );
             effective_addr = load16( PC + 1, kNoPageWrap );
@@ -75,29 +183,30 @@ void Cpu::exec() {
     }
 
     // loads and stores
-    uint8_t* reg_arg;
     switch ( opcode & 0b00000011 ) {
         case 0b00:
-            reg_arg = &Y;
+            arg1 = Y;
             break;
         case 0b01:
-            reg_arg = &X;
+            arg1 = A;
             break;
         case 0b10:
-            reg_arg = &A;
+            arg1 = X;
             break;
         default:
             throw std::logic_error( "unofficial opcode: cc == 11" );
     }
+
     // stores: have 8th bit set
     if ( ( opcode >> 5 ) == 0b100 ) {
-        store8( effective_addr, *reg_arg );
+        store8( effective_addr, arg1 );
     }
     // loads: have 8th and 6th bits set
     else if ( ( opcode >> 5 ) == 0b101 ) {
-        *reg_arg = load8( effective_addr );
+        res = arg1 = load8( effective_addr );
+        set_flag( fNegative, res & 0x80 );
+        set_flag( fZero, !res );
     }
-    // all other instructions TODO
     PC = PC + num_bytes;
 }
 
@@ -220,23 +329,23 @@ void Cpu::do_poweron() {
         store8( addr, 0 );
     }
     // TODO:
-    //     All 15 bits of noise channel LFSR = $0000[5]. The first time the LFSR
-    //     is clocked from the all-0s state, it will shift in a 1. APU Frame
-    //     Counter:
+    //     All 15 bits of noise channel LFSR = $0000[5]. The first time the
+    //     LFSR is clocked from the all-0s state, it will shift in a 1. APU
+    //     Frame Counter:
     //
     //         2A03E, G, various clones: APU Frame Counter reset.
-    //         2A03letterless: APU frame counter powers up at a value equivalent
-    //         to 15
+    //         2A03letterless: APU frame counter powers up at a value
+    //         equivalent to 15
     //
     //     Internal memory ($0000-$07FF) has unreliable startup state. Some
-    //     machines may have consistent RAM contents at power-on, but others do
-    //     not.
+    //     machines may have consistent RAM contents at power-on, but others
+    //     do not.
     //
-    //         Emulators often implement a consistent RAM startup state (e.g.
-    //         all $00 or $FF, or a particular pattern), and flash carts like
-    //         the PowerPak may partially or fully initialize RAM before
-    //         starting a program, so an NES programmer must be careful not to
-    //         rely on the startup contents of RAM.
+    //         Emulators often implement a consistent RAM startup state
+    //         (e.g. all $00 or $FF, or a particular pattern), and flash
+    //         carts like the PowerPak may partially or fully initialize RAM
+    //         before starting a program, so an NES programmer must be
+    //         careful not to rely on the startup contents of RAM.
     log_nintendulator();
 }
 
@@ -308,8 +417,8 @@ uint8_t Cpu::addr_access( uint16_t addr, uint8_t payload ) {
                 // FINALLY: cartridge space
                 return cartridge.cpu_access<A>( addr, payload );
             } else if ( ( addr & 0b11000 ) == 0b11000 ) {
-                // SECOND; 8 bytes: "APU and I/O functionality that is normally
-                // disabled." See CPU Test Mode
+                // SECOND; 8 bytes: "APU and I/O functionality that is
+                // normally disabled." See CPU Test Mode
             } else {
                 // FIRST 3 * 8 bytes: NES APU and I/O registers
             }
