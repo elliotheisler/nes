@@ -37,18 +37,41 @@ void Cpu::exec() {
     const AddrMode mode           = get_mode( opcode );
     r16            effective_addr = get_effective_addr( mode );
 
-    // 2 JMP absolute and indirect
-    if ( opcode == 0b01001100 | opcode == 0b01101100 ) {
-        PC = effective_addr;
-        return;
-    }
-    // JSR
-    else if ( opcode == 0x20 ) {
-        effective_addr = load16( PC + 1, kNoPageWrap );
-        push( PC.page );
-        push( PC.index );
-        PC = effective_addr;
-        return;
+    switch ( opcode ) {
+            // -- JMP-like instructions
+            // 2 JMP absolute and indirect
+        case 0x4C:
+        case 0x6C:
+            PC = effective_addr;
+            return;
+            // BRK
+        case 0x00:
+            interrupt<iBRK>();
+            return;
+        // JSR
+        case 0x20:
+            r16 ret_addr  = PC;
+            ret_addr     += 2;
+            push( ret_addr.page );
+            push( ret_addr.index );
+            effective_addr = load16( PC + 1, kNoPageWrap );
+            PC             = effective_addr;
+            return;
+        // -- RTS-like instructions
+        // RTI
+        case 0x40:
+            P                    = pop();
+            effective_addr.index = pop();
+            effective_addr.page  = pop();
+            PC                   = effective_addr;
+            return;
+        // RTS
+        case 0x60:
+            effective_addr.index = pop();
+            effective_addr.page  = pop();
+            effective_addr++;
+            PC = effective_addr;
+            return;
     }
 
     // loads and stores
@@ -155,11 +178,37 @@ r16 Cpu::get_effective_addr( AddrMode m ) {
     return addr;
 }
 
+template <Cpu::IntType I>
+void Cpu::interrupt() {
+    using enum IntType;
+    using enum PageWrap;
+    using enum CpuFlag;
+    constexpr static uint16_t INT_VECTORS[] = {
+        [iNMI] = 0xFFFA, [iReset] = 0xFFFC, [iIRQ] = 0xFFFE, [iBRK] = 0xFFFE };
+
+    switch ( I ) {
+        case iReset:  // no writes on stack for resets
+            SP -= 3;
+            break;
+        case iIRQ:
+        case iNMI:
+        case iBRK:
+            r16 ret_addr = PC + 2;
+            push( ret_addr.page );
+            push( ret_addr.index );
+            // BRK pushes B flag set to 1, IRQ and NMI set to 0
+            push( I == iBRK ? P | fBFlag : P & ~fBFlag );
+    }
+    PC = load16( INT_VECTORS[I], kNoPageWrap );
+    // in reality, this occurs between reading the low and high PC bytes
+    set_flag( fInterruptDisable, true );
+}
+
 void Cpu::do_poweron() {
     // https://www.nesdev.org/wiki/CPU_power_up_state#At_power-up
     cycles_elapsed = 7; /* nestest.log starts with 7 cycles elapsed, so I assume
                            the poweron sequence is like BRK and INT */
-    SR = 0b00110100;
+    P = 0b00110100;
     A = X = Y = 0x00;
     SP        = 0b11111101;
     store8( 0x4017, 0 );  // frame irq enabled
@@ -193,10 +242,8 @@ void Cpu::do_poweron() {
 
 void Cpu::do_reset() {
     // https://www.nesdev.org/wiki/CPU_power_up_state#After_reset
-    //     using enum Cpu::CpuFlag;
-    //     SP -= 3;
-    //     set_flag(fInterruptDisable, true);
-    //     store8(0x4015, 0);
+    interrupt<iReset>();
+    store8( 0x4015, 0 );
     // TODO:
     //     APU triangle phase is reset to 0 (i.e. outputs a value of 15, the
     //     first step of its waveform) APU DPCM output ANDed with 1 (upper 6
@@ -208,7 +255,7 @@ void Cpu::do_reset() {
 }
 
 r16 Cpu::load16( r16 addr, PageWrap pw ) {
-    using enum Cpu::PageWrap;
+    using enum PageWrap;
     r16 ret;
     ret.index = load8( addr );
     switch ( pw ) {
@@ -271,12 +318,9 @@ uint8_t Cpu::addr_access( uint16_t addr, uint8_t payload ) {
 }
 
 // flags
-bool Cpu::get_flag( CpuFlag flag ) { return SR & static_cast<uint8_t>( flag ); }
+bool Cpu::get_flag( CpuFlag flag ) { return P & static_cast<uint8_t>( flag ); }
 
-void Cpu::set_flag( CpuFlag flag, bool val ) {
-    uint8_t mask  = static_cast<uint8_t>( flag );
-    SR           &= val ? mask : ~mask;
-}
+void Cpu::set_flag( CpuFlag flag, bool val ) { P = val ? P | flag : P & ~flag; }
 
 // =================logging
 #include <format>
@@ -304,6 +348,6 @@ void Cpu::log_nintendulator() {
              "%s"  // PPU fields placeholder
              "CYC:%d\n",
              PC.page, PC.index, opcode, arg1str.c_str(), arg2str.c_str(),
-             cur_inst.to_string().c_str(), A, X, Y, SR, SP, "             ",
+             cur_inst.to_string().c_str(), A, X, Y, P, SP, "             ",
              cycles_elapsed );
 }

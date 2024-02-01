@@ -12,17 +12,18 @@ class Cpu {
     using AddrMode = Instruction::AddrMode;
 
    public:
-    enum class CpuFlag {
+    enum CpuFlag {
         fCarry            = 1 << 0,
         fZero             = 1 << 1,
         fInterruptDisable = 1 << 2,
         fDecimal          = 1 << 3,
         // https://www.nesdev.org/wiki/Status_flags#The_B_flag
-        fUnusedFlag1 = 1 << 4,
+        fBFlag       = 1 << 4,
         fUnusedFlag2 = 1 << 5,
         fOverflow    = 1 << 6,
         fNegative    = 1 << 7,
     };
+
     // flag functions
     bool get_flag( CpuFlag flag );
     void set_flag( CpuFlag flag, bool val );
@@ -35,12 +36,18 @@ class Cpu {
     // perform state changes equivalent to hitting the NES reset button
     void do_reset();
 
+
     void clock();
 
-    uint8_t A, Y, X, SP, SR;
+    uint8_t A, Y, X, SP, P;
     r16     PC;
 
    private:
+    enum IntType { iIRQ, iNMI, iBRK, iReset };
+
+    template <IntType I>
+    void interrupt();
+
     Cartridge &cartridge;
     // only the cpu communicates with the APU and the NES's 2kb of RAM
     // TODO: Apu apu
