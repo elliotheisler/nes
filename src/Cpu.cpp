@@ -455,11 +455,12 @@ void Cpu::log_nintendulator() {
             ? ""
             : std::vformat( "{:02X}", std::make_format_args( arg2 ) ) };
 
-    fprintf( stdout,
-             "%02X%02X  %02X %2s %2s  %-32sA:%02X X:%02X Y:%02X P:%02X SP:%02X"
-             "%s"  // PPU fields placeholder
-             "CYC:%d\n",
+    std::string msg = std::vformat(
+             "{:02X}{:02X}  {:02X} {:2} {:2}  {:32}A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}"
+             " PPU:{:8}"  // PPU fields placeholder
+             "CYC:{}", std::make_format_args(
              PC.page, PC.index, opcode, arg1str.c_str(), arg2str.c_str(),
-             cur_inst.to_string().c_str(), A, X, Y, P, SP, "             ",
-             cycles_elapsed );
+             cur_inst.to_string().c_str(), A, X, Y, P, SP, "",
+             cycles_elapsed ));
+    std::cout << msg << std::endl;
 }
