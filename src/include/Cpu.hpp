@@ -57,6 +57,9 @@ class Cpu {
 
     // execute current instruction
     int     exec(); // returns number of cycles taken
+    int exec_00( const InstRecord &r );
+    int exec_01( const InstRecord &r );
+    int exec_10( const InstRecord &r );
     int      get_cycles( uint8_t opcode );
     int      get_num_bytes( uint8_t opcode );
     AddrMode get_mode( uint8_t opcode );

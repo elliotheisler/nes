@@ -1518,7 +1518,7 @@
     "name": "STA",
     "opcode": 129,
     "cycles": {
-      "count": 7,
+      "count": 6,
       "add_on_pagecross": false
     },
     "opcode_binary": [
@@ -1560,7 +1560,7 @@
     "opcode": 133,
     "mode": "ZeroPage",
     "cycles": {
-      "count": 4,
+      "count": 3,
       "add_on_pagecross": false
     },
     "opcode_binary": [
@@ -1665,7 +1665,7 @@
     "description": "Store Accumulator",
     "bytes": 3,
     "cycles": {
-      "count": 5,
+      "count": 4,
       "add_on_pagecross": false
     },
     "opcode_binary": [
@@ -1728,7 +1728,7 @@
     "name": "STA",
     "mode": "(Indirect),Y",
     "cycles": {
-      "count": 7,
+      "count": 6,
       "add_on_pagecross": false
     },
     "opcode_binary": [
@@ -1770,7 +1770,7 @@
     "name": "STA",
     "opcode": 149,
     "cycles": {
-      "count": 5,
+      "count": 4,
       "add_on_pagecross": false
     },
     "opcode_binary": [
@@ -1833,7 +1833,7 @@
     "opcode": 153,
     "mode": "Absolute,Y",
     "cycles": {
-      "count": 6,
+      "count": 5,
       "add_on_pagecross": false
     },
     "opcode_binary": [
@@ -1875,7 +1875,7 @@
     "name": "STA",
     "mode": "Absolute,X",
     "cycles": {
-      "count": 6,
+      "count": 5,
       "add_on_pagecross": false
     },
     "opcode_binary": [

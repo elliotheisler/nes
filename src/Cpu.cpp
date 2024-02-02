@@ -14,8 +14,8 @@
 #include "Disassemble.hpp"
 #include "InstructionDatabase.hpp"
 
-using nlohmann::json;
 using Instruction::AddrMode;
+using nlohmann::json;
 using enum Instruction::AddrMode;
 using std::tuple;
 
@@ -27,366 +27,323 @@ void Cpu::clock() {
     if ( counter == 0 ) {
         last_cycles = exec();
     }
-    counter = (counter + 1) % last_cycles;
+    counter = ( counter + 1 ) % last_cycles;
     // ... and act like it actually completed after <last_cycles> cycles
     if ( counter == 0 ) {
         cycles_elapsed += last_cycles;
         log_nintendulator();
     }
 }
-static int exec_00() {
 
+class IllegalOpcodeError: virtual public std::exception {
+    private:
+        char* message;
+    public:
+        IllegalOpcodeError(char* msg) : message{msg} {}
+        virtual const char* what() const throw () {
+            return message;
+        }
+};
+
+int Cpu::exec_00( const InstRecord& r ) {
+    using enum PageWrap;
+    constexpr CpuFlag BRANCH_FLAGS[] = { fNegative, fOverflow, fCarry, fZero };
+    uint8_t           res, arg;
+    r16               ret_addr;
+    auto [effective_addr, page_crossed] = get_effective_addr( r.adr_mode );
+    switch ( r.opcode >> 2 & 0b000111 ) {  // aaa**000
+        case 0b110:                        // flag setters/getters
+            PC++;
+            switch ( r.opcode >> 5 ) {
+                case 0b000:
+                    set_flag( fCarry, false );
+                    return 2;
+                case 0b001:
+                    set_flag( fCarry, true );
+                    return 2;
+                case 0b010:
+                    set_flag( fInterruptDisable, false );
+                    return 2;
+                case 0b011:
+                    set_flag( fInterruptDisable, true );
+                    return 2;
+                case 0b100:  // TYA
+                    res = A = Y;
+                    set_flag( fNegative, res & 0x80 );
+                    set_flag( fZero, !res );
+                    return 2;
+                case 0b101:
+                    set_flag( fOverflow, false );
+                    return 2;
+                case 0b110:
+                    set_flag( fDecimal, false );
+                    return 2;
+                case 0b111:
+                    set_flag( fDecimal, true );
+                    return 2;
+            }
+        case 0b100:  // branches
+            if ( ( r.opcode >> 5 & 0b001 ) ==
+                 get_flag( BRANCH_FLAGS[r.opcode >> 6] ) ) {
+                PC = effective_addr;
+                return r.cycles + page_crossed + 1;
+            } else {
+                PC += 2;
+                return r.cycles + page_crossed;
+            }
+        case 0b000:  // BRK/JSR/RTI/RTS/***/CPY/CPX
+            switch ( r.opcode >> 5 ) {
+                case 0b000:  // BRK
+                    interrupt<iBRK>();
+                    return 7;
+                case 0b001:  // JSR
+                    ret_addr = PC + 2;
+                    push( ret_addr.page );
+                    push( ret_addr.index );
+                    effective_addr = load16( PC + 1, kNoPageWrap );
+                    PC             = effective_addr;
+                    return 6;
+                case 0b010:  // RTI
+                    P                    = pop();
+                    effective_addr.index = pop();
+                    effective_addr.page  = pop();
+                    PC                   = effective_addr;
+                    return 6;
+                case 0b011:  // RTS
+                    effective_addr.index = pop();
+                    effective_addr.page  = pop();
+                    effective_addr++;
+                    PC = effective_addr;
+                    return 6;
+                case 0b100:
+                    throw IllegalOpcodeError("0x80");
+                case 0b101:  // LDY imm
+                    res = Y = load8( effective_addr );
+                    break;
+                case 0b110:  // CPY
+                    res = Y - load8( effective_addr );
+                    set_flag( fCarry, res < Y );
+                    break;
+                case 0b111:  // CPX
+                    res = X - load8( effective_addr );
+                    set_flag( fCarry, res < X );
+                    break;
+            }
+            set_flag( fNegative, res & 0x80 );
+            set_flag( fZero, !res );
+            PC += r.bytes;
+            return r.cycles + page_crossed;
+        case 0b010:  // push/pull/DEY/TAY/INY/INX
+            switch ( r.opcode >> 5 ) {
+                case 0b000:  // PHP
+                    push( P );
+                    PC++;
+                    return 3;
+                case 0b001:  // PLP
+                    P = pop();
+                    PC++;
+                    return 4;
+                case 0b010:  // PHA
+                    push( A );
+                    PC++;
+                    return 3;
+                case 0b011:  // PLA
+                    res = A = pop();
+                    break;
+                case 0b100:  // DEY
+                    res = --Y;
+                    break;
+                case 0b101:  // TAY
+                    res = Y = A;
+                    break;
+                case 0b110:  // INY
+                    res = ++Y;
+                    break;
+                case 0b111:  // INX
+                    res = ++X;
+                    break;
+            }
+            set_flag( fNegative, res & 0x80 );
+            set_flag( fZero, !res );
+            PC += r.bytes;
+            return r.cycles;
+    }
+    // note that this doesn't check all illegal opcodes
+    switch ( r.opcode >> 5 ) {
+        case 0b000:
+            throw IllegalOpcodeError("000bb100");
+        case 0b001:  // BIT
+            res = A & load8( effective_addr );
+            set_flag( fOverflow, res & 1 << 6 );
+            break;
+        case 0b010:  // JMP abs
+        case 0b011:  // JMP ind
+            PC = effective_addr;
+            return r.cycles;
+        case 0b100:  // STY
+            store8( effective_addr, Y );
+            PC += r.bytes;
+            return r.cycles;
+        case 0b101:  // LDY: note - LDY absolute,X is the only cc == 00
+                     // instruction that may cause an extra page boundary cycle
+            res = Y = load8( effective_addr );
+            break;
+        case 0b110:  // CPY
+            res = Y - load8( effective_addr );
+            set_flag( fCarry, res < Y );
+            break;
+        case 0b111:  // CPX
+            res = X - load8( effective_addr );
+            set_flag( fCarry, res < X );
+            break;
+    }
+    set_flag( fNegative, res & 0x80 );
+    set_flag( fZero, !res );
+    PC += r.bytes;
+    return r.cycles + page_crossed;
 }
-static int exec_01() {
+
+int Cpu::exec_01( const InstRecord& r ) {
+    auto [effective_addr, page_crossed] = get_effective_addr( r.adr_mode );
+    uint8_t res;
+    uint8_t arg2;
+    switch ( r.opcode >> 5 ) {
+        case 0b000:  // ORA
+            arg2 = load8( effective_addr );
+            A = res = A | arg2;
+            break;
+        case 0b001:  // AND
+            arg2 = load8( effective_addr );
+            A = res = A & arg2;
+            break;
+        case 0b010:  // EOR
+            arg2 = load8( effective_addr );
+            A = res = A ^ arg2;
+            break;
+        case 0b011:  // ADC
+            arg2 = load8( effective_addr );
+            A = res = A + arg2 + get_flag( fCarry );
+            set_flag( fCarry, res < A );
+            set_flag( fOverflow, 0x80 & ~( A ^ arg2 ) & ( A ^ res ) );
+            break;
+        case 0b100:  // STA
+            store8( effective_addr, A );
+            PC += r.bytes;
+            return r.cycles + page_crossed;
+        case 0b101:  // LDA
+            arg2 = load8( effective_addr );
+            A = res = arg2;
+            break;
+        case 0b110:  // CMP
+            arg2 = load8( effective_addr );
+            res  = A - arg2;
+            set_flag( fCarry, res < A );
+            break;
+        case 0b111:  // SBC
+            arg2 = load8( effective_addr );
+            A = res = A + ~arg2 + get_flag( fCarry );
+            set_flag( fCarry, res < A );
+            set_flag( fOverflow, 0x80 & ( A ^ arg2 ) & ( A ^ res ) );
+            break;
+    }
+    // all cc == 01 (except stores) affect N and Z the same:
+    set_flag( fNegative, res & 0x80 );
+    set_flag( fZero, !res );
+    PC += r.bytes;
+    return r.cycles + page_crossed;
 }
-static int exec_10() {
+
+int Cpu::exec_10( const InstRecord& r ) {
+    uint8_t res, arg;
+    auto [effective_addr, page_crossed] = get_effective_addr( r.adr_mode );
+    switch ( r.opcode >> 5 ) {
+        case 0b000:  // ASL
+            arg = load8( effective_addr );
+            res = arg << 1;
+            store8( effective_addr, res );
+            set_flag( fCarry, arg & 0x80 );
+            break;
+        case 0b001:  // ROL
+            arg = load8( effective_addr );
+            res = arg << 1 | arg >> 7;
+            store8( effective_addr, res );
+            set_flag( fCarry, arg & 0x80 );
+            break;
+        case 0b010:  // LSR
+            arg = load8( effective_addr );
+            res = arg >> 1;
+            store8( effective_addr, res );
+            set_flag( fCarry, arg & 0x01 );
+            break;
+        case 0b011:  // ROR
+            arg = load8( effective_addr );
+            res = arg >> 1 | arg << 7;
+            store8( effective_addr, res );
+            set_flag( fCarry, arg & 0x01 );
+            break;
+        case 0b100:  // STX ( or TX(A|S) )
+            if ( ( r.opcode & 0b00011100 ) == 0b00001000 ) {  // TXA
+                res = A = X;
+            } else if ( ( r.opcode & 0b00011100 ) == 0b00011000 ) {  // TXS
+                res = SP = X;
+                PC++;
+                return 2;  // TXS, unlike every other
+                           // transfer instruction,
+                           // affects no flags.
+            } else {       // STX
+                store8( effective_addr, X );
+                PC += r.bytes;
+                return r.cycles + page_crossed;  // stores affect no flags
+            }
+            break;
+        case 0b101:  // LDX ( or T(A|S)X )
+            if ( ( r.opcode & 0b00011100 ) == 0b00001000 ) {  // TAX
+                res = X = A;
+            } else if ( ( r.opcode & 0b00011100 ) == 0b00011000 ) {  // TSX
+                res = X = SP;
+            } else {  // LDX
+                arg = load8( effective_addr );
+                res = X = arg;
+            }
+            break;
+        case 0b110:  // DEC ( or DEX )
+            arg = load8( effective_addr );
+            res = arg - 1;
+            store8( effective_addr, res );
+            break;
+        case 0b111:  // INC ( or NOP )
+            if ( r.opcode == 0xEA ) {
+                PC++;
+                return 2;
+            }
+            arg = load8( effective_addr );
+            res = arg + 1;
+            store8( effective_addr, res );
+            break;
+    }
+    // all cc == 10 (except stores and TXS) affect N and Z the
+    // same:
+    set_flag( fNegative, res & 0x80 );
+    set_flag( fZero, !res );
+    PC += r.bytes;
+    return r.cycles + page_crossed;
 }
 
 // TODO: account for page cross extra cycle in all instructions
 int Cpu::exec() {
-    using enum PageWrap;
-    // https://llx.com/Neil/a2/opcodes.html
-    const uint8_t  opcode         = load8( PC );
-    int            cycles         = get_cycles( opcode );
-    int            num_bytes      = get_num_bytes( opcode );
-    const AddrMode mode           = get_mode( opcode );
-    auto [effective_addr, page_crossed] = get_effective_addr( mode );
-    cycles += page_crossed;
-
-    // need a default value since this is a reference i guess
-    uint8_t  arg1;
-    uint8_t  arg2;
-    uint8_t& dest = A;
-    uint8_t  res;
-    r16      ret_addr;
-    // ***some instructions that don't really belong anywhere
-    switch ( opcode ) {
-            // -- JMP-like instructions
-            // 2 JMP absolute and indirect
-        case 0x4C:
-        case 0x6C:
-            PC = effective_addr;
-            return cycles;
-            // BIT insts
-        case 0x24:
-        case 0x2C:
-            arg1 = A;
-            res  = arg1 & load8( effective_addr );
-            set_flag( fOverflow, res & fOverflow );
-            set_flag( fNegative, res & 0x80 );
-            set_flag( fZero, !res );
-            goto INC_PC;
-        case 0xEA: // NOP
-            goto INC_PC;
-    }
-
-
-    // ***main lookup table
+    uint8_t    opcode = load8( PC );
+    InstRecord r      = Instruction::TABLE[opcode];
     switch ( opcode & 0b11 ) {
-        case 0b01: // aaabbb01
-            dest = A;
-            arg1 = A;
-            arg2 = load8( effective_addr );
-            switch ( opcode >> 5 ) {
-                case 0b000:  // ORA
-                    dest = res = arg1 | arg2;
-                    break;
-                case 0b001:  // AND
-                    dest = res = arg1 & arg2;
-                    break;
-                case 0b010:  // EOR
-                    dest = res = arg1 ^ arg2;
-                    break;
-                case 0b011:  // ADC
-                    dest = res = arg1 + arg2 + get_flag( fCarry );
-                    break;
-                    // case 0b100: // STA
-                    //   store8(effective_addr, arg1); break;
-                    //                 case 0b101:  // LDA
-                    //                     dest = res = arg1 = arg2;
-                    //                     break;
-                case 0b110:  // CMP
-                    res = arg1 - arg2;
-                    break;
-                case 0b111:  // SBC
-                    dest = res = arg1 + ~arg2 + get_flag( fCarry );
-                    break;
-            }
-            // all cc == 01 (except stores) affect N and Z the same:
-            set_flag( fNegative, res & 0x80 );
-            set_flag( fZero, !res );
-            // ADC, SBC, and CMP: C flag
-            switch ( opcode >> 5 ) {
-                case 0b011:  // ADC
-                case 0b110:  // CMP
-                case 0b111:  // SBC
-                    set_flag( fCarry, res < arg1 );
-                    // ADC and SBC: V flag
-                    // logic: for signed addition, "overflowing" beyond bounds
-                    // of -128 and 127 is only possible if arg1 and arg2 have
-                    // the same sign and the result has the opposite sign for
-                    // subtraction, arg1 and arg2 must have different signs
-                    if ( opcode >> 5 == 0b011 ) {
-                        set_flag( fOverflow,
-                                  0x80 & ~( arg1 ^ arg2 ) & ( arg1 ^ res ) );
-                    } else if ( opcode >> 5 == 0b111 ) {
-                        set_flag( fOverflow,
-                                  0x80 & ( arg1 ^ arg2 ) & ( arg1 ^ res ) );
-                    }
-            }
-            break;
-        case 0b10: // aaabbb10
-            arg1 = load8( effective_addr );
-            switch ( opcode >> 5 ) {
-                case 0b000:  // ASL
-                    res = arg1 << 1;
-                    store8( effective_addr, res );
-                    break;
-                case 0b001:  // ROL
-                    res = arg1 << 1 | arg1 >> 7;
-                    store8( effective_addr, res );
-                    break;
-                case 0b010:  // LSR
-                    res = arg1 >> 1;
-                    store8( effective_addr, res );
-                    break;
-                case 0b011:  // ROR
-                    res = arg1 >> 1 | arg1 << 7;
-                    store8( effective_addr, res );
-                    break;
-                    // case 0b100: // STX ( or TXA )
-                    //               case 0b101: // LDX ( or TAX )
-                    //                 res = arg1;
-                case 0b110:  // DEC ( or DEX )
-                    res = arg1 - 1;
-                    store8( effective_addr, res );
-                    break;
-                case 0b111:  // INC
-                    res = arg1 + 1;
-                    store8( effective_addr, res );
-                    break;
-            }
-            // all cc == 10 (except stores, and transfers) affect N and Z the
-            // same:
-            set_flag( fNegative, res & 0x80 );
-            set_flag( fZero, !res );
-            // shift instructions set the C flag to the leftmost/rightmost bit,
-            // i.e the one shifted "out"
-            switch ( opcode >> 5 ) {
-                case 0b000:  // ASL
-                case 0b001:  // ROL
-                    set_flag( fCarry, arg1 & 0x80 );
-                    break;
-                case 0b010:  // LSR
-                case 0b011:  // ROR
-                    set_flag( fCarry, arg1 & 0x01 );
-                    break;
-            }
-            break;
-        case 0b00:                              // aabbb00
-            switch ( opcode >> 2 & 0b000111 ) {  // aaa**b00
-                case 0b110:                      // flag setters/getters
-                    switch ( opcode >> 5 ) {
-                        case 0b000:
-                            set_flag( fCarry, false );
-                            break;
-                        case 0b001:
-                            set_flag( fCarry, true );
-                            break;
-                        case 0b010:
-                            set_flag( fInterruptDisable, false );
-                            break;
-                        case 0b011:
-                            set_flag( fInterruptDisable, true );
-                            break;
-                        case 0b100:  // TYA
-                            arg1 = Y;
-                            dest = A;
-                            res = dest = arg1;
-                            break;
-                        case 0b101:
-                            set_flag( fOverflow, false );
-                            break;
-                        case 0b110:
-                            set_flag( fDecimal, false );
-                            break;
-                        case 0b111:
-                            set_flag( fDecimal, true );
-                            break;
-                    }
-                    goto NO_LDST_00;
-                case 0b100:  // branches
-                    switch ( opcode >> 6 ) {
-                        case 0b00:
-                            if ( ( ( opcode >> 5 ) & 0b001 ) ==
-                                 get_flag( fNegative ) ) {
-                                PC = effective_addr;
-                                return cycles + 1;
-                            }
-                            break;
-                        case 0b01:
-                            if ( ( ( opcode >> 5 ) & 0b001 ) ==
-                                 get_flag( fOverflow ) ) {
-                                PC = effective_addr;
-                                return cycles + 1;
-                            }
-                            break;
-                        case 0b10:
-                            if ( ( ( opcode >> 5 ) & 0b001 ) ==
-                                 get_flag( fCarry ) ) {
-                                PC = effective_addr;
-                                return cycles + 1;
-                            }
-                            break;
-                        case 0b11:
-                            if ( ( ( opcode >> 5 ) & 0b001 ) ==
-                                 get_flag( fZero ) ) {
-                                PC = effective_addr;
-                                return cycles + 1;
-                            }
-                            break;
-                    }
-                    goto NO_LDST_00;
-                case 0b000:
-                    if ( !( opcode & 0x80 ) ) {  //  BRK, JSR, RTI, RTS
-                        switch ( opcode ) {
-                            // BRK
-                            case 0x00:
-                                interrupt<iBRK>();
-                                return cycles;
-                            // JSR
-                            case 0x20:
-                                ret_addr  = PC;
-                                ret_addr += 2;
-                                push( ret_addr.page );
-                                push( ret_addr.index );
-                                effective_addr = load16( PC + 1, kNoPageWrap );
-                                PC             = effective_addr;
-                                return cycles;
-                            // -- RTS-like instructions
-                            // RTI
-                            case 0x40:
-                                P                    = pop();
-                                effective_addr.index = pop();
-                                effective_addr.page  = pop();
-                                PC                   = effective_addr;
-                                return cycles;
-                            // RTS
-                            case 0x60:
-                                effective_addr.index = pop();
-                                effective_addr.page  = pop();
-                                effective_addr++;
-                                PC = effective_addr;
-                                return cycles;
-                        }
-                    }
-                    break;
-                case 0b010:
-                    if ( !( opcode & 0x80 ) ) {  // PHP/PLP, PHA/PLA
-                        switch ( opcode >> 5 ) {
-                            case 0b00:
-                                push( P );
-                                break;
-                            case 0b01:
-                                P = pop();
-                                break;
-                            case 0b10:
-                                push( A );
-                                break;
-                            case 0b11:
-                                res = A = pop();
-                                set_flag( fNegative, res & 0x80 );
-                                set_flag( fZero, !res );
-                                break;
-                        }
-                    } else {  // DEY, TAY, INY, INX
-                        switch ( opcode >> 5 ) {
-                            case 0b00:
-                                res = Y = Y - 1;
-                                break;
-                            case 0b01:
-                                res = Y = A;
-                                break;
-                            case 0b10:
-                                res = Y = Y + 1;
-                                break;
-                            case 0b11:
-                                res = X = X + 1;
-                                break;
-                        }
-                        set_flag( fNegative, res & 0x80 );
-                        set_flag( fZero, !res );
-                    }
-                    goto NO_LDST_00;
-            }
-            // LD/ST
-            switch (opcode >> 5) {
-              case 0b100:
-              case 0b101:
-                goto LOAD_STORE;
-            }
-NO_LDST_00:
-            // CPY, CPX, INY, INX: 11a0bb00
-            if ( !( opcode & 0b00010000 ) ) {
-                switch ( opcode >> 5 ) {
-                    case 0b110:
-                        arg1 = dest = Y;
-                        break;
-                    case 0b111:
-                        arg1 = dest = X;
-                        break;
-                }
-                switch ( opcode >> 2 & 0b11 ) {  // 11a01100
-                        //                 case 0b10: // IN(Y|X) **already
-                        //                 handled above!
-                        //                   res = dest = arg1 + 1; break;
-                    case 0b00:  // CP(Y|X)
-                    case 0b01:
-                    case 0b11:
-                        arg2 = load8( effective_addr );
-                        res  = arg1 - arg2;
-                        break;
-                }
-                set_flag( fNegative, res & 0x80 );
-                set_flag( fZero, !res );
-                set_flag( fCarry, res < arg1 );
-            }
-            goto INC_PC;
-        default: break;
-//             throw std::logic_error( "unofficial opcode: cc == 11" );
-    }
-
-    // ***loads and stores
-LOAD_STORE:
-    switch ( opcode & 0b00000011 ) {
         case 0b00:
-            arg1 = dest = Y;
-            break;
+            return exec_00( r );
         case 0b01:
-            arg1 = dest = A;
-            break;
+            return exec_01( r );
         case 0b10:
-            arg1 = dest = X;
-            break;
+            return exec_10( r );
+        case 0b11:
+            throw IllegalOpcodeError("aaabbb00");
     }
-
-    // stores: have 8th bit set
-    if ( ( opcode >> 5 ) == 0b100 ) {
-        store8( effective_addr, arg1 );
-    }
-    // loads: have 8th and 6th bits set
-    else if ( ( opcode >> 5 ) == 0b101 ) {
-        res = dest = load8( effective_addr );
-        set_flag( fNegative, res & 0x80 );
-        set_flag( fZero, !res );
-    }
-
-
-
-
-INC_PC:
-    PC = PC + num_bytes;
-    return cycles;
+    return 0;  // silence a compiler warning
 }
 
 AddrMode Cpu::get_mode( uint8_t opcode ) {
@@ -414,9 +371,9 @@ tuple<r16, Cpu::PageCross> Cpu::get_effective_addr( AddrMode m ) {
     using enum PageWrap;
     using enum PageCross;
     r16 addr;
-// used in checking page boundary cross:
-    PageCross page_crossed = cPageNotCrossed; 
-    uint8_t old_page;
+    // used in checking page boundary cross:
+    PageCross page_crossed = cPageNotCrossed;
+    uint8_t   old_page;
     switch ( m ) {
         case mZeroPage:
             addr = load8( PC + 1 );
@@ -434,20 +391,18 @@ tuple<r16, Cpu::PageCross> Cpu::get_effective_addr( AddrMode m ) {
             addr = load16( PC + 1, kNoPageWrap );
             break;
         case mAbsoluteX:
-            addr  = load16( PC + 1, kNoPageWrap );
-            old_page = addr.page;
-            addr += X;
-            page_crossed = old_page == addr.page
-                ? cPageNotCrossed
-                : cPageCrossed;
+            addr      = load16( PC + 1, kNoPageWrap );
+            old_page  = addr.page;
+            addr     += X;
+            page_crossed =
+                old_page == addr.page ? cPageNotCrossed : cPageCrossed;
             break;
         case mAbsoluteY:
-            addr  = load16( PC + 1, kNoPageWrap );
-            old_page = addr.page;
-            addr += Y;
-            page_crossed = old_page == addr.page
-                ? cPageNotCrossed
-                : cPageCrossed;
+            addr      = load16( PC + 1, kNoPageWrap );
+            old_page  = addr.page;
+            addr     += Y;
+            page_crossed =
+                old_page == addr.page ? cPageNotCrossed : cPageCrossed;
             break;
 
         case mIndirect:
@@ -459,31 +414,29 @@ tuple<r16, Cpu::PageCross> Cpu::get_effective_addr( AddrMode m ) {
             addr        = load16( addr, kDoPageWrap );
             break;
         case mIndirectY:
-            addr  = load8( PC + 1 );
-            addr  = load16( addr, kDoPageWrap );
-            old_page = addr.page;
-            addr += Y;
-            page_crossed = old_page == addr.page
-                ? cPageNotCrossed
-                : cPageCrossed;
+            addr      = load8( PC + 1 );
+            addr      = load16( addr, kDoPageWrap );
+            old_page  = addr.page;
+            addr     += Y;
+            page_crossed =
+                old_page == addr.page ? cPageNotCrossed : cPageCrossed;
             break;
 
         case mImmediate:
             addr = PC + 1;
             break;
         case mRelative:
-            addr  = PC + 2;
-            old_page = addr.page;
-            addr += static_cast<int>( load8( PC +1) );
-            page_crossed = old_page == addr.page
-                ? cPageNotCrossed
-                : cPageCrossed;
+            addr      = PC + 2;
+            old_page  = addr.page;
+            addr     += static_cast<int>( load8( PC + 1 ) );
+            page_crossed =
+                old_page == addr.page ? cPageNotCrossed : cPageCrossed;
             break;
         case mAccumulator:
         case mImplied:
-            return tuple(0, page_crossed);  // TODO
+            return tuple( 0, page_crossed );  // TODO
     }
-    return tuple(addr, page_crossed);
+    return tuple( addr, page_crossed );
 }
 
 template <Cpu::IntType I>
@@ -652,11 +605,12 @@ void Cpu::log_nintendulator() {
             : std::vformat( "{:02X}", std::make_format_args( arg2 ) ) };
 
     std::string msg = std::vformat(
-             "{:02X}{:02X}  {:02X} {:2} {:2}  {:32}A:{:02X} X:{:02X} Y:{:02X} P:{:02X} SP:{:02X}"
-             " PPU:{:8}"  // PPU fields placeholder
-             "CYC:{}", std::make_format_args(
-             PC.page, PC.index, opcode, arg1str.c_str(), arg2str.c_str(),
-             cur_inst.to_string().c_str(), A, X, Y, P, SP, "",
-             cycles_elapsed ));
+        "{:02X}{:02X}  {:02X} {:2} {:2}  {:32}A:{:02X} X:{:02X} Y:{:02X} "
+        "P:{:02X} SP:{:02X}"
+        " PPU:{:8}"  // PPU fields placeholder
+        "CYC:{}",
+        std::make_format_args( PC.page, PC.index, opcode, arg1str.c_str(),
+                               arg2str.c_str(), cur_inst.to_string().c_str(), A,
+                               X, Y, P, SP, "", cycles_elapsed ) );
     std::cout << msg << std::endl;
 }
