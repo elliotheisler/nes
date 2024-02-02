@@ -1,6 +1,7 @@
 #include "Cpu.hpp"
 
 #include <bits/ranges_algo.h>
+#include <sys/types.h>
 
 #include <cstdint>
 #include <cstdio>
@@ -13,9 +14,10 @@
 #include "Disassemble.hpp"
 #include "InstructionDatabase.hpp"
 
-using json     = nlohmann::json;
-using AddrMode = Instruction::AddrMode;
+using nlohmann::json;
+using Instruction::AddrMode;
 using enum Instruction::AddrMode;
+using std::tuple;
 
 Cpu::Cpu( Cartridge& p_cartridge )
     : cartridge{ p_cartridge }, A{ 0 }, X{ 0 }, Y{ 0 } {};
@@ -32,6 +34,13 @@ void Cpu::clock() {
         log_nintendulator();
     }
 }
+static int exec_00() {
+
+}
+static int exec_01() {
+}
+static int exec_10() {
+}
 
 // TODO: account for page cross extra cycle in all instructions
 int Cpu::exec() {
@@ -41,7 +50,8 @@ int Cpu::exec() {
     int            cycles         = get_cycles( opcode );
     int            num_bytes      = get_num_bytes( opcode );
     const AddrMode mode           = get_mode( opcode );
-    r16            effective_addr = get_effective_addr( mode );
+    auto [effective_addr, page_crossed] = get_effective_addr( mode );
+    cycles += page_crossed;
 
     // need a default value since this is a reference i guess
     uint8_t  arg1;
@@ -73,7 +83,7 @@ int Cpu::exec() {
 
     // ***main lookup table
     switch ( opcode & 0b11 ) {
-        case 01: // aaabbb01
+        case 0b01: // aaabbb01
             dest = A;
             arg1 = A;
             arg2 = load8( effective_addr );
@@ -174,61 +184,61 @@ int Cpu::exec() {
             }
             break;
         case 0b00:                              // aabbb00
-            switch ( opcode >> 3 & 0b00011 ) {  // aaa**b00
-                case 0b11:                      // flag setters/getters
+            switch ( opcode >> 2 & 0b000111 ) {  // aaa**b00
+                case 0b110:                      // flag setters/getters
                     switch ( opcode >> 5 ) {
-                        case 000:
+                        case 0b000:
                             set_flag( fCarry, false );
                             break;
-                        case 001:
+                        case 0b001:
                             set_flag( fCarry, true );
                             break;
-                        case 010:
+                        case 0b010:
                             set_flag( fInterruptDisable, false );
                             break;
-                        case 011:
+                        case 0b011:
                             set_flag( fInterruptDisable, true );
                             break;
-                        case 100:  // TYA
+                        case 0b100:  // TYA
                             arg1 = Y;
                             dest = A;
                             res = dest = arg1;
                             break;
-                        case 101:
+                        case 0b101:
                             set_flag( fOverflow, false );
                             break;
-                        case 110:
+                        case 0b110:
                             set_flag( fDecimal, false );
                             break;
-                        case 111:
+                        case 0b111:
                             set_flag( fDecimal, true );
                             break;
                     }
                     goto NO_LDST_00;
-                case 0b10:  // branches
-                    switch ( opcode >> 5 & 0b11) {
-                        case 00:
+                case 0b100:  // branches
+                    switch ( opcode >> 6 ) {
+                        case 0b00:
                             if ( ( ( opcode >> 5 ) & 0b001 ) ==
                                  get_flag( fNegative ) ) {
                                 PC = effective_addr;
                                 return cycles + 1;
                             }
                             break;
-                        case 01:
+                        case 0b01:
                             if ( ( ( opcode >> 5 ) & 0b001 ) ==
                                  get_flag( fOverflow ) ) {
                                 PC = effective_addr;
                                 return cycles + 1;
                             }
                             break;
-                        case 10:
+                        case 0b10:
                             if ( ( ( opcode >> 5 ) & 0b001 ) ==
                                  get_flag( fCarry ) ) {
                                 PC = effective_addr;
                                 return cycles + 1;
                             }
                             break;
-                        case 11:
+                        case 0b11:
                             if ( ( ( opcode >> 5 ) & 0b001 ) ==
                                  get_flag( fZero ) ) {
                                 PC = effective_addr;
@@ -237,7 +247,7 @@ int Cpu::exec() {
                             break;
                     }
                     goto NO_LDST_00;
-                case 0b00:
+                case 0b000:
                     if ( !( opcode & 0x80 ) ) {  //  BRK, JSR, RTI, RTS
                         switch ( opcode ) {
                             // BRK
@@ -271,7 +281,7 @@ int Cpu::exec() {
                         }
                     }
                     break;
-                case 0b01:
+                case 0b010:
                     if ( !( opcode & 0x80 ) ) {  // PHP/PLP, PHA/PLA
                         switch ( opcode >> 5 ) {
                             case 0b00:
@@ -342,7 +352,7 @@ NO_LDST_00:
                 set_flag( fCarry, res < arg1 );
             }
             goto INC_PC;
-        default:
+        default: break;
 //             throw std::logic_error( "unofficial opcode: cc == 11" );
     }
 
@@ -400,9 +410,13 @@ std::string Cpu::to_assembly( const uint8_t opcode ) {
     return i_record.name;
 }
 
-r16 Cpu::get_effective_addr( AddrMode m ) {
+tuple<r16, Cpu::PageCross> Cpu::get_effective_addr( AddrMode m ) {
     using enum PageWrap;
+    using enum PageCross;
     r16 addr;
+// used in checking page boundary cross:
+    PageCross page_crossed = cPageNotCrossed; 
+    uint8_t old_page;
     switch ( m ) {
         case mZeroPage:
             addr = load8( PC + 1 );
@@ -421,11 +435,19 @@ r16 Cpu::get_effective_addr( AddrMode m ) {
             break;
         case mAbsoluteX:
             addr  = load16( PC + 1, kNoPageWrap );
+            old_page = addr.page;
             addr += X;
+            page_crossed = old_page == addr.page
+                ? cPageNotCrossed
+                : cPageCrossed;
             break;
         case mAbsoluteY:
             addr  = load16( PC + 1, kNoPageWrap );
+            old_page = addr.page;
             addr += Y;
+            page_crossed = old_page == addr.page
+                ? cPageNotCrossed
+                : cPageCrossed;
             break;
 
         case mIndirect:
@@ -439,21 +461,29 @@ r16 Cpu::get_effective_addr( AddrMode m ) {
         case mIndirectY:
             addr  = load8( PC + 1 );
             addr  = load16( addr, kDoPageWrap );
+            old_page = addr.page;
             addr += Y;
+            page_crossed = old_page == addr.page
+                ? cPageNotCrossed
+                : cPageCrossed;
             break;
 
         case mImmediate:
             addr = PC + 1;
             break;
         case mRelative:
-            addr  = PC;
+            addr  = PC + 2;
+            old_page = addr.page;
             addr += static_cast<int>( load8( PC +1) );
+            page_crossed = old_page == addr.page
+                ? cPageNotCrossed
+                : cPageCrossed;
             break;
         case mAccumulator:
         case mImplied:
-            return 0;  // TODO
+            return tuple(0, page_crossed);  // TODO
     }
-    return addr;
+    return tuple(addr, page_crossed);
 }
 
 template <Cpu::IntType I>

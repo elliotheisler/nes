@@ -63,7 +63,8 @@ class Cpu {
     uint8_t  get_affected_flags( uint8_t opcode );
     // load/store
     enum class PageWrap { kDoPageWrap, kNoPageWrap };
-    r16     get_effective_addr( AddrMode m );
+    enum PageCross { cPageCrossed = 1, cPageNotCrossed = 0};
+    std::tuple<r16, PageCross>     get_effective_addr( AddrMode m );
     r16     load16( r16 addr, PageWrap pw );
     uint8_t load8( uint16_t addr );
     void    store8( uint16_t addr, uint8_t payload );  // TODO: pagewrap?
