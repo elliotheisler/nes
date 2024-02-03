@@ -14,7 +14,7 @@ int main() {
     // to be consistent with startup state of nestest.nes
     cpu.set_flag( fBFlag, false );
 
-    for ( int i = 0; i < 1e2; i++ ) {
+    for ( int i = 0; i < 1e4; i++ ) {
         cpu.clock();
     }
 }

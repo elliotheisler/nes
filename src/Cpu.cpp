@@ -37,11 +37,11 @@ void Cpu::clock() {
 
 class IllegalOpcodeError: virtual public std::exception {
     private:
-        char* message;
+        const std::string &message;
     public:
-        IllegalOpcodeError(char* msg) : message{msg} {}
+        IllegalOpcodeError(const std::string &msg) : message{msg} {}
         virtual const char* what() const throw () {
-            return message;
+            return message.c_str();
         }
 };
 
@@ -86,10 +86,10 @@ int Cpu::exec_00( const InstRecord& r ) {
             if ( ( r.opcode >> 5 & 0b001 ) ==
                  get_flag( BRANCH_FLAGS[r.opcode >> 6] ) ) {
                 PC = effective_addr;
-                return r.cycles + page_crossed + 1;
+                return 2 + page_crossed + 1;
             } else {
                 PC += 2;
-                return r.cycles + page_crossed;
+                return 2;
             }
         case 0b000:  // BRK/JSR/RTI/RTS/***/CPY/CPX
             switch ( r.opcode >> 5 ) {
@@ -121,12 +121,14 @@ int Cpu::exec_00( const InstRecord& r ) {
                     res = Y = load8( effective_addr );
                     break;
                 case 0b110:  // CPY
-                    res = Y - load8( effective_addr );
-                    set_flag( fCarry, res < Y );
+                    arg = load8( effective_addr );
+                    res = Y - arg;
+                    set_flag( fCarry, arg <= Y); 
                     break;
                 case 0b111:  // CPX
-                    res = X - load8( effective_addr );
-                    set_flag( fCarry, res < X );
+                    arg = load8( effective_addr );
+                    res = X - arg;
+                    set_flag( fCarry, arg <= X);
                     break;
             }
             set_flag( fNegative, res & 0x80 );
@@ -136,7 +138,7 @@ int Cpu::exec_00( const InstRecord& r ) {
         case 0b010:  // push/pull/DEY/TAY/INY/INX
             switch ( r.opcode >> 5 ) {
                 case 0b000:  // PHP
-                    push( P );
+                    push( P | fBFlag ); // PHP, like BRK, pushes P with bit 4 == true
                     PC++;
                     return 3;
                 case 0b001:  // PLP
@@ -173,9 +175,16 @@ int Cpu::exec_00( const InstRecord& r ) {
         case 0b000:
             throw IllegalOpcodeError("000bb100");
         case 0b001:  // BIT
-            res = A & load8( effective_addr );
-            set_flag( fOverflow, res & 1 << 6 );
-            break;
+            arg = load8( effective_addr );
+            res = A & arg;
+            set_flag( fOverflow, arg & 1 << 6 );
+            // BIT checks bit 7 of the
+            // *argument*, not the result of
+            // the bittest
+            set_flag( fNegative, arg & 1 << 7 ); 
+            set_flag( fZero, !res );
+            PC += r.bytes;
+            return r.cycles; // no page cross possible
         case 0b010:  // JMP abs
         case 0b011:  // JMP ind
             PC = effective_addr;
@@ -222,9 +231,10 @@ int Cpu::exec_01( const InstRecord& r ) {
             break;
         case 0b011:  // ADC
             arg2 = load8( effective_addr );
-            A = res = A + arg2 + get_flag( fCarry );
+            res = A + arg2 + get_flag( fCarry );
             set_flag( fCarry, res < A );
             set_flag( fOverflow, 0x80 & ~( A ^ arg2 ) & ( A ^ res ) );
+            A = res;
             break;
         case 0b100:  // STA
             store8( effective_addr, A );
@@ -237,13 +247,15 @@ int Cpu::exec_01( const InstRecord& r ) {
         case 0b110:  // CMP
             arg2 = load8( effective_addr );
             res  = A - arg2;
-            set_flag( fCarry, res < A );
+            // different carry flag logic from ADC and SBC:
+            set_flag( fCarry, arg2 <= A);
             break;
         case 0b111:  // SBC
             arg2 = load8( effective_addr );
-            A = res = A + ~arg2 + get_flag( fCarry );
+            res = A + ~arg2 + get_flag( fCarry );
             set_flag( fCarry, res < A );
             set_flag( fOverflow, 0x80 & ( A ^ arg2 ) & ( A ^ res ) );
+            A = res;
             break;
     }
     // all cc == 01 (except stores) affect N and Z the same:
@@ -258,27 +270,47 @@ int Cpu::exec_10( const InstRecord& r ) {
     auto [effective_addr, page_crossed] = get_effective_addr( r.adr_mode );
     switch ( r.opcode >> 5 ) {
         case 0b000:  // ASL
-            arg = load8( effective_addr );
-            res = arg << 1;
-            store8( effective_addr, res );
+            if (r.adr_mode == mAccumulator) {
+                arg = A;
+                A = res = arg << 1;
+            } else {
+                arg = load8( effective_addr );
+                res = arg << 1;
+                store8( effective_addr, res );
+            }
             set_flag( fCarry, arg & 0x80 );
             break;
         case 0b001:  // ROL
-            arg = load8( effective_addr );
-            res = arg << 1 | arg >> 7;
-            store8( effective_addr, res );
+            if (r.adr_mode == mAccumulator) {
+                arg = A;
+                A = res = arg << 1 | get_flag(fCarry);
+            } else {
+                arg = load8( effective_addr );
+                res = arg << 1 | get_flag(fCarry);
+                store8( effective_addr, res );
+            }
             set_flag( fCarry, arg & 0x80 );
             break;
         case 0b010:  // LSR
-            arg = load8( effective_addr );
-            res = arg >> 1;
-            store8( effective_addr, res );
+            if (r.adr_mode == mAccumulator) {
+                arg = A;
+                A = res = arg >> 1;
+            } else {
+                arg = load8( effective_addr );
+                res = arg >> 1;
+                store8( effective_addr, res );
+            }
             set_flag( fCarry, arg & 0x01 );
             break;
         case 0b011:  // ROR
-            arg = load8( effective_addr );
-            res = arg >> 1 | arg << 7;
-            store8( effective_addr, res );
+            if (r.adr_mode == mAccumulator) {
+                arg = A;
+                A = res = arg >> 1 | get_flag(fCarry) << 7;
+            } else {
+                arg = load8( effective_addr );
+                res = arg >> 1 | get_flag(fCarry) << 7;
+                store8( effective_addr, res );
+            }
             set_flag( fCarry, arg & 0x01 );
             break;
         case 0b100:  // STX ( or TX(A|S) )
@@ -307,9 +339,13 @@ int Cpu::exec_10( const InstRecord& r ) {
             }
             break;
         case 0b110:  // DEC ( or DEX )
-            arg = load8( effective_addr );
-            res = arg - 1;
-            store8( effective_addr, res );
+            if (r.opcode == 0xCA) {
+                res = --X;
+            } else {
+                arg = load8( effective_addr );
+                res = arg - 1;
+                store8( effective_addr, res );
+            }
             break;
         case 0b111:  // INC ( or NOP )
             if ( r.opcode == 0xEA ) {
@@ -589,6 +625,11 @@ void Cpu::set_flag( CpuFlag flag, bool val ) { P = val ? P | flag : P & ~flag; }
 void Cpu::log_nintendulator() {
     using namespace Disassemble;
     const uint8_t     opcode = load8( PC );
+    // flags at bit positions 4 & 5 aren't actually in the NES CPU's 6-bit P register.
+    // there is no convention on how to print these flags.
+    // nintendulator's logging seems to print them as '10', hence the below
+    // statement. helps to keep debugging the log consistent.
+    const uint8_t true_P = P & ~(fBFlag) | (fUnusedFlag2);
     const uint8_t     arg1   = load8( PC + 1 );
     const uint8_t     arg2   = load8( PC + 2 );
     const ParsedInst  cur_inst{ PC, opcode, arg1, arg2 };
@@ -611,6 +652,6 @@ void Cpu::log_nintendulator() {
         "CYC:{}",
         std::make_format_args( PC.page, PC.index, opcode, arg1str.c_str(),
                                arg2str.c_str(), cur_inst.to_string().c_str(), A,
-                               X, Y, P, SP, "", cycles_elapsed ) );
+                               X, Y, true_P, SP, "", cycles_elapsed ) );
     std::cout << msg << std::endl;
 }
