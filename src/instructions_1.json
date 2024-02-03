@@ -342,8 +342,8 @@
     "name": "ASL",
     "opcode": 30,
     "cycles": {
-      "count": 6,
-      "add_on_pagecross": true
+      "count": 7,
+      "add_on_pagecross": false
     },
     "opcode_binary": [
       0,
@@ -741,8 +741,8 @@
     "description": "Rotate Left",
     "mode": "Absolute,X",
     "cycles": {
-      "count": 6,
-      "add_on_pagecross": true
+      "count": 7,
+      "add_on_pagecross": false
     },
     "opcode_binary": [
       0,
@@ -1119,8 +1119,8 @@
     "description": "Logical Shift Right",
     "bytes": 3,
     "cycles": {
-      "count": 6,
-      "add_on_pagecross": true
+      "count": 7,
+      "add_on_pagecross": false
     },
     "opcode_binary": [
       0,
@@ -1497,8 +1497,8 @@
     "name": "ROR",
     "opcode": 126,
     "cycles": {
-      "count": 6,
-      "add_on_pagecross": true
+      "count": 7,
+      "add_on_pagecross": false
     },
     "opcode_binary": [
       0,
@@ -1539,7 +1539,7 @@
     "description": "Store Y Register",
     "bytes": 2,
     "cycles": {
-      "count": 4,
+      "count": 3,
       "add_on_pagecross": false
     },
     "opcode_binary": [
@@ -1644,7 +1644,7 @@
     "opcode": 140,
     "mode": "Absolute",
     "cycles": {
-      "count": 5,
+      "count": 4,
       "add_on_pagecross": false
     },
     "opcode_binary": [
@@ -1749,7 +1749,7 @@
     "bytes": 2,
     "description": "Store Y Register",
     "cycles": {
-      "count": 5,
+      "count": 4,
       "add_on_pagecross": false
     },
     "opcode_binary": [

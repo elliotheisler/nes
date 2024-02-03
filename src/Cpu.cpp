@@ -50,7 +50,7 @@ int Cpu::exec_00( const InstRecord& r ) {
     constexpr CpuFlag BRANCH_FLAGS[] = { fNegative, fOverflow, fCarry, fZero };
     uint8_t           res, arg;
     r16               ret_addr;
-    auto [effective_addr, page_crossed] = get_effective_addr( r.adr_mode );
+    auto [effective_addr, pcross_cycle] = get_effective_addr( r.adr_mode , r.opcode);
     switch ( r.opcode >> 2 & 0b000111 ) {  // aaa**000
         case 0b110:                        // flag setters/getters
             PC++;
@@ -86,7 +86,7 @@ int Cpu::exec_00( const InstRecord& r ) {
             if ( ( r.opcode >> 5 & 0b001 ) ==
                  get_flag( BRANCH_FLAGS[r.opcode >> 6] ) ) {
                 PC = effective_addr;
-                return 2 + page_crossed + 1;
+                return 2 + pcross_cycle + 1;
             } else {
                 PC += 2;
                 return 2;
@@ -134,7 +134,7 @@ int Cpu::exec_00( const InstRecord& r ) {
             set_flag( fNegative, res & 0x80 );
             set_flag( fZero, !res );
             PC += r.bytes;
-            return r.cycles + page_crossed;
+            return r.cycles + pcross_cycle;
         case 0b010:  // push/pull/DEY/TAY/INY/INX
             switch ( r.opcode >> 5 ) {
                 case 0b000:  // PHP
@@ -192,28 +192,33 @@ int Cpu::exec_00( const InstRecord& r ) {
         case 0b100:  // STY
             store8( effective_addr, Y );
             PC += r.bytes;
+                     // NOTE: stores have fixed no. cycles 
+                     // since they always take the extra page
+                     // cross cycle
             return r.cycles;
         case 0b101:  // LDY: note - LDY absolute,X is the only cc == 00
                      // instruction that may cause an extra page boundary cycle
             res = Y = load8( effective_addr );
             break;
         case 0b110:  // CPY
-            res = Y - load8( effective_addr );
-            set_flag( fCarry, res < Y );
+            arg = load8(effective_addr);
+            res = Y - arg;
+            set_flag( fCarry,arg <= Y);
             break;
         case 0b111:  // CPX
-            res = X - load8( effective_addr );
-            set_flag( fCarry, res < X );
+            arg = load8(effective_addr);
+            res = X - arg;
+            set_flag( fCarry, arg <= X );
             break;
     }
     set_flag( fNegative, res & 0x80 );
     set_flag( fZero, !res );
     PC += r.bytes;
-    return r.cycles + page_crossed;
+    return r.cycles + pcross_cycle;
 }
 
 int Cpu::exec_01( const InstRecord& r ) {
-    auto [effective_addr, page_crossed] = get_effective_addr( r.adr_mode );
+    auto [effective_addr, pcross_cycle] = get_effective_addr( r.adr_mode, r.opcode );
     uint8_t res;
     uint8_t arg2;
     switch ( r.opcode >> 5 ) {
@@ -239,7 +244,10 @@ int Cpu::exec_01( const InstRecord& r ) {
         case 0b100:  // STA
             store8( effective_addr, A );
             PC += r.bytes;
-            return r.cycles + page_crossed;
+                     // NOTE: stores have fixed no. cycles 
+                     // since they always take the extra page
+                     // cross cycle
+            return r.cycles;
         case 0b101:  // LDA
             arg2 = load8( effective_addr );
             A = res = arg2;
@@ -262,12 +270,12 @@ int Cpu::exec_01( const InstRecord& r ) {
     set_flag( fNegative, res & 0x80 );
     set_flag( fZero, !res );
     PC += r.bytes;
-    return r.cycles + page_crossed;
+    return r.cycles + pcross_cycle;
 }
 
 int Cpu::exec_10( const InstRecord& r ) {
     uint8_t res, arg;
-    auto [effective_addr, page_crossed] = get_effective_addr( r.adr_mode );
+    auto [effective_addr, pcross_cycle] = get_effective_addr( r.adr_mode , r.opcode);
     switch ( r.opcode >> 5 ) {
         case 0b000:  // ASL
             if (r.adr_mode == mAccumulator) {
@@ -279,6 +287,7 @@ int Cpu::exec_10( const InstRecord& r ) {
                 store8( effective_addr, res );
             }
             set_flag( fCarry, arg & 0x80 );
+            pcross_cycle = cPageNotCrossed; // always takes the cycle
             break;
         case 0b001:  // ROL
             if (r.adr_mode == mAccumulator) {
@@ -290,6 +299,7 @@ int Cpu::exec_10( const InstRecord& r ) {
                 store8( effective_addr, res );
             }
             set_flag( fCarry, arg & 0x80 );
+            pcross_cycle = cPageNotCrossed; // always takes the cycle
             break;
         case 0b010:  // LSR
             if (r.adr_mode == mAccumulator) {
@@ -301,6 +311,7 @@ int Cpu::exec_10( const InstRecord& r ) {
                 store8( effective_addr, res );
             }
             set_flag( fCarry, arg & 0x01 );
+            pcross_cycle = cPageNotCrossed; // always takes the cycle
             break;
         case 0b011:  // ROR
             if (r.adr_mode == mAccumulator) {
@@ -312,6 +323,7 @@ int Cpu::exec_10( const InstRecord& r ) {
                 store8( effective_addr, res );
             }
             set_flag( fCarry, arg & 0x01 );
+            pcross_cycle = cPageNotCrossed; // always takes the cycle
             break;
         case 0b100:  // STX ( or TX(A|S) )
             if ( ( r.opcode & 0b00011100 ) == 0b00001000 ) {  // TXA
@@ -325,7 +337,10 @@ int Cpu::exec_10( const InstRecord& r ) {
             } else {       // STX
                 store8( effective_addr, X );
                 PC += r.bytes;
-                return r.cycles + page_crossed;  // stores affect no flags
+                     // NOTE: stores have fixed no. cycles 
+                     // since they always take the extra page
+                     // cross cycle
+                return r.cycles ;  // stores affect no flags
             }
             break;
         case 0b101:  // LDX ( or T(A|S)X )
@@ -346,15 +361,17 @@ int Cpu::exec_10( const InstRecord& r ) {
                 res = arg - 1;
                 store8( effective_addr, res );
             }
+            pcross_cycle = cPageNotCrossed; // DEC always takes the pcross cycle
             break;
         case 0b111:  // INC ( or NOP )
-            if ( r.opcode == 0xEA ) {
+            if ( r.opcode == 0xEA ) { // NOP
                 PC++;
                 return 2;
             }
             arg = load8( effective_addr );
             res = arg + 1;
             store8( effective_addr, res );
+            pcross_cycle = cPageNotCrossed; // DEC always takes the pcross cycle
             break;
     }
     // all cc == 10 (except stores and TXS) affect N and Z the
@@ -362,7 +379,7 @@ int Cpu::exec_10( const InstRecord& r ) {
     set_flag( fNegative, res & 0x80 );
     set_flag( fZero, !res );
     PC += r.bytes;
-    return r.cycles + page_crossed;
+    return r.cycles + pcross_cycle;
 }
 
 // TODO: account for page cross extra cycle in all instructions
@@ -403,13 +420,17 @@ std::string Cpu::to_assembly( const uint8_t opcode ) {
     return i_record.name;
 }
 
-tuple<r16, Cpu::PageCross> Cpu::get_effective_addr( AddrMode m ) {
+tuple<r16, Cpu::PageCross> Cpu::get_effective_addr( AddrMode m, uint8_t opcode ) {
     using enum PageWrap;
     using enum PageCross;
     r16 addr;
     // used in checking page boundary cross:
-    PageCross page_crossed = cPageNotCrossed;
+    PageCross pagecross_cycle = cPageNotCrossed;
     uint8_t   old_page;
+    // stores, shifts/rotates, and increment/decrement's always
+    // take the page-cross cycle. this is accounted for in the
+    // caller
+    const bool is_store = opcode >> 5 == 0b100;
     switch ( m ) {
         case mZeroPage:
             addr = load8( PC + 1 );
@@ -430,20 +451,23 @@ tuple<r16, Cpu::PageCross> Cpu::get_effective_addr( AddrMode m ) {
             addr      = load16( PC + 1, kNoPageWrap );
             old_page  = addr.page;
             addr     += X;
-            page_crossed =
-                old_page == addr.page ? cPageNotCrossed : cPageCrossed;
+    // stores always cross a page: this is accounted for in the caller.
+            pagecross_cycle = 
+                !is_store && old_page != addr.page ? cPageCrossed : cPageNotCrossed;
             break;
         case mAbsoluteY:
             addr      = load16( PC + 1, kNoPageWrap );
             old_page  = addr.page;
             addr     += Y;
-            page_crossed =
-                old_page == addr.page ? cPageNotCrossed : cPageCrossed;
+    // stores always cross a page: this is accounted for in the caller.
+            pagecross_cycle = 
+                !is_store && old_page != addr.page ? cPageCrossed : cPageNotCrossed;
             break;
 
         case mIndirect:
-            addr = load16( PC + 1, kDoPageWrap );
+            addr = load16( PC + 1, kNoPageWrap );
             addr = load16( addr, kDoPageWrap );
+            break;
         case mIndirectX:
             addr        = load8( PC + 1 );
             addr.index += X;
@@ -454,8 +478,9 @@ tuple<r16, Cpu::PageCross> Cpu::get_effective_addr( AddrMode m ) {
             addr      = load16( addr, kDoPageWrap );
             old_page  = addr.page;
             addr     += Y;
-            page_crossed =
-                old_page == addr.page ? cPageNotCrossed : cPageCrossed;
+    // stores always cross a page: this is accounted for in the caller.
+            pagecross_cycle = 
+                !is_store && old_page != addr.page ? cPageCrossed : cPageNotCrossed;
             break;
 
         case mImmediate:
@@ -465,14 +490,14 @@ tuple<r16, Cpu::PageCross> Cpu::get_effective_addr( AddrMode m ) {
             addr      = PC + 2;
             old_page  = addr.page;
             addr     += static_cast<int>( load8( PC + 1 ) );
-            page_crossed =
+            pagecross_cycle =
                 old_page == addr.page ? cPageNotCrossed : cPageCrossed;
             break;
         case mAccumulator:
         case mImplied:
-            return tuple( 0, page_crossed );  // TODO
+            return tuple( 0, pagecross_cycle );  // TODO
     }
-    return tuple( addr, page_crossed );
+    return tuple( addr, pagecross_cycle );
 }
 
 template <Cpu::IntType I>

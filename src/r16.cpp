@@ -27,6 +27,6 @@ r16& r16::operator++(int) {
 r16 r16::add(uint8_t offset) {
     r16 res;
     res.index = index + offset;
-    res.page  = res.index > index ? page : page + 1;
+    res.page  = res.index >= index ? page : page + 1;
     return res;
 }
